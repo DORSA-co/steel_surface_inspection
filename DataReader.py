@@ -3,6 +3,17 @@ import numpy as np
 
 csv_path = 'severstal-steel-defect-detection/train.csv'
 
+#______________________________________________________________________________________________________________________________________________
+#expalin:
+#   read csv file from path and return csv list
+#
+#arg:
+#   csv_path: path of csv label
+#
+#return:
+#   csv list: 
+#       col_0: image_name, col_1: Class_ID, col_2: Encoded_pixel
+#______________________________________________________________________________________________________________________________________________
 def csv_reader( csv_path):
     with open( csv_path, newline='') as csvfile :
             csv_iter = csv.reader( csvfile)
@@ -11,6 +22,21 @@ def csv_reader( csv_path):
 
 
 
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   ->Convert csv list to dictionay that each key is a image_name and value is a tupel contatin classes_list and Encodded_pixel_list
+#   ->'image_name': ([classes], [encoded_pilxes_array])
+#   ->class: an int number
+#   ->encoded_pilxes_array: an array with shape(n,2) that first col is start pixel and second col is count pix ( order is form top to down then lft to right)
+#
+#arg:
+#   csv_path: path of csv label
+#
+#return:
+#   csv list: 
+#       col_0: image_name, col_1: Class_ID, col_2: Encoded_pixel
+#______________________________________________________________________________________________________________________________________________
 def csv2labelDict( csv_list):
 
     dict_lbl = {}
@@ -31,6 +57,9 @@ def csv2labelDict( csv_list):
             encodedPx_list.append( encoded_pixel )
             dict_lbl[img_name] = (classes_list, encodedPx_list)
     return dict_lbl
+
+
+
 
 
 
