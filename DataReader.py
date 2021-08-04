@@ -46,7 +46,7 @@ def csv2labelDict( csv_list):
     #Row -> image_name, class_id, mask_row_lenght_code
     for row in csv_list:
         img_name, class_id, encoded_pixel = row
-        class_id = int(class_id)
+        class_id = int(class_id) - 1 #in csv class start from 1
         encoded_pixel = encoded_pixel.split(' ')
         encoded_pixel = list(  map( int, encoded_pixel ))
         encoded_pixel = np.array(encoded_pixel).reshape( (-1,2) ) #firrst col-> start pix , second col -> count pix
@@ -91,13 +91,73 @@ def get_imgs_list(path, split=0.2, shuffle=True):
 
 
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get dict_lbl( from csv2labelDict ) and images_name_list (from get_imgs_list()) and return binary label array
+#   0: no defect
+#   1: has defect
+#arg:
+#   dict_lbl: dictionary label that returned from csv2labelDict function
+#   imgs_list: a batch or full list of imags_name that we want get their binary label
+#
+#return:
+#   binary_lbl, imgs_list
+#   binary_lbl: binary label of imgs_list that is a 1d numpy array 
+#   imgs_list: it is excatly imgs_list aurguman
+#______________________________________________________________________________________________________________________________________________
+def get_binary_labels( dict_lbl, imgs_list ):
+    binary_lbl_func = lambda x: 1 if x in dict_lbl.keys() else 0
+    binary_lbl = np.array( list(map( binary_lbl_func , imgs_list)) )
+    return binary_lbl,imgs_list
+
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get dict_lbl( from csv2labelDict ) and images_name_list (from get_imgs_list()) and return mult classfication label in one hot code
+#
+#arg:
+#   dict_lbl: dictionary label that returned from csv2labelDict function
+#   imgs_list: a batch or full list of imags_name that we want get their binary label
+#   class_num: number of class. background class shouldn't acount
+#   no_defect: if True, it Allocates a new class to no defect. it's class is 0 class
+#
+#return:
+#   class_lbl, imgs_list
+#   class_lbl: classification label for images_name_list
+#   imgs_list: it is excatly imgs_list aurguman
+#______________________________________________________________________________________________________________________________________________
+def get_class_labels(dict_lbl, imgs_list, class_num, no_defect=False):
+    def class_lbl_func(img_name):
+        _class_ = np.zeros((class_num,))
+        if img_name in dict_lbl.keys():
+            img_class = np.array( dict_lbl[img_name][0] )
+            _class_[ img_class ] = 1
+        if no_defect:
+            #if no defect, no_defect class value should be 1 else 0
+            if np.sum(_class_) == 0:
+                _class_ = np.insert(_class_,0,1)
+            else:
+                _class_ = np.insert(_class_,0,0)
+        return _class_
+
+    classes_lbl = list( map( class_lbl_func, imgs_list))
+    classes_lbl = np.array( classes_lbl)
+    return classes_lbl,imgs_list
 
 
 
 csv_list = csv_reader( csv_path)
 dict_lbl = csv2labelDict(csv_list)
-a,b =  get_imgs_list(img_path)
+imgs_list,b =  get_imgs_list(img_path)
 
+bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
+classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
+
+
+
+    
+    
     
 
 
