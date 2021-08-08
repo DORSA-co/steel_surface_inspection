@@ -147,7 +147,10 @@ def get_class_labels(dict_lbl, imgs_list, class_num, no_defect=False):
 
 
 
-csv_list = csv_reader( csv_path)
+
+
+
+csv_list = csv_reader(csv_path)
 dict_lbl = csv2labelDict(csv_list)
 imgs_list,b =  get_imgs_list(img_path)
 
@@ -157,11 +160,6 @@ classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
 
     
-    
-    
-
-
-
 
     
 m=0
