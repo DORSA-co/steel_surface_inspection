@@ -6,6 +6,7 @@ from numpy.lib.shape_base import split
 import random
 csv_path = 'severstal-steel-defect-detection/train.csv'
 img_path = 'severstal-steel-defect-detection/train_images'
+from sys import getsizeof
 
 #______________________________________________________________________________________________________________________________________________
 #expalin:
@@ -149,6 +150,104 @@ def get_class_labels(dict_lbl, imgs_list, class_num, no_defect=False):
 
 
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
+#
+#arg:
+#   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
+#   width = image width
+#   height = image height
+#
+#return:
+#   image_mask = a mask that shows the location of the certain defects
+#______________________________________________________________________________________________________________________________________________
+def _conv_label_to_mask(lbl , height = 256 , width = 1600):
+    # Lbl is an np.array
+    lbl_mod = lbl.copy()
+    lbl_mod[:,1] += lbl_mod[:,0]
+  
+    mask = np.zeros((height * width))
+
+    for lbl in lbl_mod:
+        mask[lbl[0]:lbl[1]] = 255
+
+    return mask.reshape((width,height)).T
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   takes one element of csv2labelDict output (the value of an element in the dictionary) and convert the desiered lable to image mask.
+#   If nothing is passed for cls, all labels are converted to masks and returned as an array of masks.
+#   If considerBackground is set to True, all classes will increment by one an the background mask is calculated if necessary.
+#
+#
+#arg:
+#   dict_lbl = a tuple ([classes] , [ [label]s , ... ])
+#   cls = class number. If ConsiderBackground == True, the main classes start from 1 and the 0 class is the background maske.
+#       if not, the classes will start at 0.
+#   considerBackground = If true, the 0 class is considered as the background mask class and if necessary, background mask
+#       is calculated.
+#   width = image width
+#   height = image height
+#
+#return:
+#   (class , mask)
+#       class = an array of classes
+#       mask = an array of masks 
+#______________________________________________________________________________________________________________________________________________
+def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 , width = 1600):
+
+    classes = dic[0].copy()
+    labels = dic[1].copy()
+
+    def calc_background_mask(arg_labels = []):
+
+        if len(arg_labels) == 0:
+
+            arg_labels = np.array(
+                    list( map( lambda x: conv_label_to_mask(x , width = width , height = height)  , labels ) )
+                )
+
+        all_masks = np.sum(arg_labels , axis = 0).clip(0 , 255)
+        all_masks -= 255
+        all_masks *= -1
+
+        return all_masks
+
+    if considerBackground:
+        classes = list( map(lambda x: x+1 , classes))
+        classes.append(0)
+    
+        if cls == None:
+
+            labels = np.array(
+                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
+            )
+
+            np.insert( labels , 0 , calc_background_mask(labels) , axis = 0)
+
+            return classes , labels
+
+        elif cls == 0:
+            return [cls] , [calc_background_mask()]
+
+        else:
+            return [cls] , [_conv_label_to_mask(labels[cls - 1])]
+
+    else:
+        if cls == None:
+
+            labels = np.array(
+                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
+            )
+            return classes , labels
+
+        else:
+            return [cls] , [_conv_label_to_mask(labels[cls])]
+
+
+
+
 
 csv_list = csv_reader(csv_path)
 dict_lbl = csv2labelDict(csv_list)
@@ -158,8 +257,3 @@ bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
 classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
 
-
-    
-
-    
-#m=0
