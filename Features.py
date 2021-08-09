@@ -12,8 +12,8 @@ import numpy as np
 #
 #   bin_n: number of bins in histogram
 #
-#   split: This parameter specifies that the image be divided into how many pieces to calculate the histogram , for split = 3
-#   the image of divided into 9 pices (3x3)
+#   split: This parameter specifies that the image be divided into how many pieces
+#   to calculate the histogram , for split = 3the image of divided into 9 pices (3x3)
 #
 #return:
 #   hist
@@ -58,3 +58,5 @@ def get_hog(gray, bin_n = 24, split=2):
 def get_hoc(gray, bin_n = 25):
     hist = cv2.calcHist( [gray],[0], None, [24],[0,255]).reshape(-1)
     return hist
+
+    
