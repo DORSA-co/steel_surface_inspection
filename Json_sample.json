@@ -1,0 +1,70 @@
+[
+    {
+        "fname": "name.jpg",
+        "path": "./path",
+        "color_mode": "COLORED",
+        "size": [
+            "width",
+            "height"
+        ],
+        "label-type": "mask",
+        "labels": [
+            {
+                "class": "1",
+                "label": [
+                    [
+                        "start_pix",
+                        "end_pix"
+                    ],
+                    [
+                        "start_pix",
+                        "end_pix"
+                    ]
+                ]
+            },
+            {
+                "class": "2",
+                "label": [
+                    [
+                        "start_pix",
+                        "end_pix"
+                    ],
+                    [
+                        "start_pix",
+                        "end_pix"
+                    ]
+                ]
+            }
+        ]
+    },
+    {
+        "fname": "name.jpg",
+        "color_mode": "COLORED",
+        "path": "./path",
+        "size": [
+            "width",
+            "height"
+        ],
+        "label-type": "bounding-box",
+        "labels": [
+            {
+                "class": "1",
+                "label": [
+                    "x_min",
+                    "x_max",
+                    "y_min",
+                    "y_max"
+                ]
+            },
+            {
+                "class": "2",
+                "label": [
+                    "x_min",
+                    "x_max",
+                    "y_min",
+                    "y_max"
+                ]
+            }
+        ]
+    }
+]
