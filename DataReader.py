@@ -114,13 +114,13 @@ class jsonReader():
         self.annotation = self.__read__(path)
 
     def get_fname(self):
-        return self.annotation['fname']
+        return self.annotation['name']
 
     def get_path(self):
         return self.annotation['path']
 
     def get_fullpath(self):
-        return os.path.join(self.annotation['path'], self.annotation['fname'] )
+        return os.path.join(self.annotation['path'], self.annotation['name'] )
 
     def get_img_size(self):
         return tuple( self.annotation['size'] )
@@ -370,4 +370,5 @@ classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
 '''
 
-js = jsonReader('Json_sample.json')
+js = jsonReader('severstal-steel-defect-detection/annotations/000a4bcdd.json')
+stop = 0
