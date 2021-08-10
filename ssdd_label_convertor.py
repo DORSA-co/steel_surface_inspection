@@ -122,9 +122,9 @@ def find_colormode( image , threshold = 20 ):
 def main():
     images_path = r"./severstal-steel-defect-detection/train_images"
     csv_path = r"./severstal-steel-defect-detection/train.csv"
-    save_path = r"./severstal-steel-defect-detection/jsons"
+    save_path = r"./severstal-steel-defect-detection/annotations"
 
-    convert_csv_to_json(images_path , csv_path , save_path , singleLine = True)
+    convert_csv_to_json(images_path , csv_path , save_path , singleLine = False)
 
 if __name__ == "__main__":
     main()
