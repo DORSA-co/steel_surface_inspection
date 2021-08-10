@@ -56,13 +56,13 @@ def csv2labelDict( csv_list ):
     return dict_lbl
 
 
-## A function for creating single Json file's string
-def create_jsondict( name, elements, pth ):
+# 
+def _create_jsondict( name, elements, pth ):
     # read element
     img = cv2.imread( path.join(pth , name) )
 
-    color_mode = find_colormode(img)
-    img_shape = get_img_shape(img)
+    color_mode = _find_colormode(img)
+    img_shape = _get_img_shape(img)
     label_type = "MASK"
     labels = []
     for idx , cls in enumerate(elements[0]):
@@ -79,7 +79,7 @@ def create_jsondict( name, elements, pth ):
         'labels' : labels
     }
 
-def save_json( jsn , save_path , singleLine = False):
+def _save_json( jsn , save_path , singleLine = False):
     json_name = path.splitext(jsn['name'])[0] + ".json"
     with open(path.join(save_path , json_name) , 'w') as jsfile:
         if singleLine:
@@ -96,35 +96,31 @@ def convert_csv_to_json(images_path , csv_path , save_path, singleLine = False):
     counter = 0
     for key, val in dict_lbl.items():
         print(f"Converted Files: {counter} / {len(dict_lbl)}" , end = "\r")
-        json_dict = create_jsondict(key , val , images_path)
-        save_json(json_dict , save_path, singleLine)   
+        json_dict = _create_jsondict(key , val , images_path)
+        _save_json(json_dict , save_path, singleLine)   
         counter += 1
     print(f"Converted Files: {counter} / {len(dict_lbl)}\nConversion Finished. \n")
 
-def get_img_shape( img ):
+def _get_img_shape( img ):
     return img.shape[:2]
 
-
-def find_colormode( image , threshold = 20 ):
+def _find_colormode( image , threshold = 20 ):
     b_g = np.abs( image[:,:,0] - image[:,:,1] )
     g_r = np.abs( image[:,:,1] - image[:,:,2] )
     b_r = np.abs( image[:,:,0] - image[:,:,2] )
 
     if np.sum(b_g) < threshold and np.sum(g_r) < threshold and np.sum(b_r) < threshold:
-        return "GRAYSCALE"
+        return "GRAYS"
     
     else:
         return "COLOR"
 
-
-
-
 def main():
     images_path = r"./severstal-steel-defect-detection/train_images"
     csv_path = r"./severstal-steel-defect-detection/train.csv"
-    save_path = r"./severstal-steel-defect-detection/jsons"
+    save_path = r"./severstal-steel-defect-detection/annotations"
 
-    convert_csv_to_json(images_path , csv_path , save_path , singleLine = True)
+    convert_csv_to_json(images_path , csv_path , save_path , singleLine = False)
 
 if __name__ == "__main__":
     main()
