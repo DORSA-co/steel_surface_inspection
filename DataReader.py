@@ -2,11 +2,178 @@ import csv
 import os
 import numpy as np
 import cv2
+from numpy.core.fromnumeric import reshape
 from numpy.lib.shape_base import split
 import random
+from sys import getsizeof
+
+import json
+
 csv_path = 'severstal-steel-defect-detection/train.csv'
 img_path = 'severstal-steel-defect-detection/train_images'
-from sys import getsizeof
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   a class for save labels of image. it contains mask, class and bbox labels
+#
+#atribiut:
+#   class: object class number
+#   mask: object mask in format of [[start px, end px],...]
+#   self.bbox: TBD
+#______________________________________________________________________________________________________________________________________________
+class Label():
+    def __init__(self):
+        self.class_ = None
+        self.mask_ = None
+        self.bbox_ = None
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   a class for read json anntotion label
+#
+#atribiut:
+#   annotation: dict of json file
+#
+#methods:
+#
+#   -------------------------------
+#   __init__:
+#       explain:
+#           set the annotation atribiut
+#       args:
+#           path: path of json file
+#       
+#   -------------------------------
+#   __read__:
+#       explain:
+#           read jason file and convert to dict
+#       args:
+#           path: path of json file
+#       returns:
+#          annotation: dictionary of json file
+#   -------------------------------
+#   get_fname:
+#       explain:
+#           return image file name image
+#       returns:
+#          fname: string of image's name
+#   -------------------------------
+#   get_path:
+#       explain:
+#           return path of image
+#       returns:
+#          fname: string of image's path
+#   -------------------------------
+#   get_fullpath:
+#       explain:
+#           return full path of image ( path + image_full_name)
+#   -------------------------------
+#   get_img_size:
+#       explain:
+#           return size of image in tuple (w,h)
+#   -------------------------------
+#   get_classes:
+#       explain:
+#           return classes id of all objects in image in np.array
+#   -------------------------------
+#   get_masks:
+#       explain:
+#           return list of objects label contain masks and classes in format of Label() class
+#   -------------------------------
+#   get_bboxs:
+#       TBD
+#   -------------------------------
+#   is _color:
+#       explain:
+#           return True, if image is colored
+#   -------------------------------
+#   is _gray:
+#       explain:
+#           return True, if image is gay
+#   -------------------------------
+#   is _mask:
+#       explain:
+#           return True, type of localisation's label is mask format
+#   -------------------------------
+#   is is_lbl_bbox:
+#       explain:
+#           return True, type of localisation's label is bounding box format
+#   -------------------------------
+#______________________________________________________________________________________________________________________________________________
+class jsonReader():
+
+    def __read__(self, path):
+        with open(path) as jfile:
+            file = json.load(jfile)
+        return file
+        
+
+    def __init__(self, path):
+        self.annotation = self.__read__(path)
+
+    def get_fname(self):
+        return self.annotation['fname']
+
+    def get_path(self):
+        return self.annotation['path']
+
+    def get_fullpath(self):
+        return os.path.join(self.annotation['path'], self.annotation['fname'] )
+
+    def get_img_size(self):
+        return tuple( self.annotation['size'] )
+
+    def get_classes(self):
+        classes = []
+        labels = self.annotation['labels']
+        for lbl in labels:
+            classes.append( lbl['class'])
+        return np.array(classes)
+    
+    def get_masks(self):
+        assert self.is_lbl_mask(), "Label type is not mask"
+        labels = self.annotation['labels']
+        labels_list = []
+        for lbl in labels:
+            print(lbl.keys())
+            c = lbl['class']
+            m = lbl['mask']
+            lbl_obj = Label()
+            lbl_obj.class_ = c
+            lbl_obj.mask_ = np.array(m).reshape((-1,2)).astype(np.int32)
+            labels_list.append(lbl_obj)
+        return labels_list
+
+
+
+
+    
+    def get_bboxs(self):
+        assert self.is_lbl_bbox(), "Label type is not bounding box"
+
+
+    def is_color(self):
+        return self.annotation['color_mode'] == 'COLOR'
+    
+    def is_gray(self):
+        return self.annotation['color_mode'] == 'GRAY'
+
+    def is_lbl_mask(self):  
+        return self.annotation['label_type'] == 'MASK'
+
+    def is_lbl_bbox(self):  
+        return self.annotation['label_type'] == 'BBOX'
+    
+    
+        
+       
+
+
+
+
+
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -191,7 +358,7 @@ def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 ,
 
 
 
-
+'''
 
 csv_list = csv_reader(csv_path)
 dict_lbl = csv2labelDict(csv_list)
@@ -201,3 +368,6 @@ bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
 classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
 
+'''
+
+js = jsonReader('Json_sample.json')
