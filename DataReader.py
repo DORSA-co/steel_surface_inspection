@@ -182,14 +182,31 @@ class Annotation():
 
 
 
-
-
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get path of labels and split into val and train lbl_file_name list
+#   get path of labels and return list of labels_name ( json file's name )
 #
 #arg:
 #   path: path of json labels
+#   split: a float number that determine amount of split
+#   shuffle: if True, the labels list shuffle
+#
+#return:
+#   lbls_list
+#   lbls_train_list: list of lbl_file_name ( jason file's name)
+#______________________________________________________________________________________________________________________________________________
+def get_labels_name_list(lbls_path, split=0.2, shuffle=True):
+    lbls_list = os.listdir(lbls_path)
+    if shuffle:
+        random.shuffle(lbls_list)
+    return lbls_list
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get list of lbl_file_name ( jason file's name) and split into val and train lbl_file_name list
+#
+#arg:
+#   lbls_train_list: list of lbl_file_name ( jason file's name)
 #   split: a float number that determine amount of split
 #   shuffle: if True, the labels list shuffle
 #
@@ -198,11 +215,7 @@ class Annotation():
 #   lbls_train_list: list of lbl_file_name for train
 #   lbls_train_list: list of lbl_file_name for validation
 #______________________________________________________________________________________________________________________________________________
-def get_labels_name_list(lbls_path, split=0.2, shuffle=True):
-    lbls_list = os.listdir(lbls_path)
-    if shuffle:
-        random.shuffle(lbls_list)
-
+def split_labels_name_list(lbls_list, split=0.2, shuffle=True):
     lbls_count = len(lbls_list)
     lbls_val_list   = lbls_list[ : int(lbls_count * split)]
     lbls_train_list = lbls_list[ int(lbls_count * split) : ]
