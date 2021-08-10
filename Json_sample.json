@@ -1,5 +1,5 @@
     {
-        "fname": "name.jpg",
+        "name": "name.jpg",
         "path": "./path",
         "color_mode": "COLOR",
         "size": [

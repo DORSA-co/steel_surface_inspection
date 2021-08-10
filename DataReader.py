@@ -179,6 +179,54 @@ class Annotation():
         
        
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   filter annonation_name list base of filter_arg 
+#
+#arg:
+#   annonation_name: list of annonation's name
+#
+#   path: path of annonations folder
+#
+#   filter_arg: it is a dictionay. it's key are same as annonation jason file, e.g "label_type", "color_mode" and etc, and
+#   their values are a list of acceptabel values for related features. this Values are or by each other. it's also accept
+#   the "class" key and don't accept "label" key for e.g if the filter_arg be { 'label_type':["MASK"], "class":[1,2] }
+#   it pass annonations that their label_type are "MASK" and their object's class consist one of 1 or 2 class or both of them
+#   
+#
+#return:
+#   filtered
+#   filtered: list of annontions_file_name that pass filters
+#______________________________________________________________________________________________________________________________________________
+def filter_annonations(annonations_name, path,filter_arg):
+
+    def filter_func(annotation_name):
+
+        with open(os.path.join(path,annotation_name)) as jfile:
+            annonation_dict = json.load(jfile)
+        
+        for filter_key, filter_values in filter_arg.items():
+            if filter_key == 'class':
+                classes =[]
+                labels = annonation_dict['labels']
+                for lbl in labels:
+                    classes.append( lbl['class'])
+
+                flag = False
+                for c in classes:
+                    if c  in filter_values:
+                        flag =  True
+                if not flag:
+                    return False                  
+            else :
+                if annonation_dict[filter_key] not in filter_values:
+                    return False
+        
+        return True
+
+    filtered = list( filter( filter_func, annonations_name))
+    return filtered
+
 
 
 
@@ -423,6 +471,12 @@ if __name__ == '__main__':
 
 
     '''
+    
+    annonations_name = ['Json_sample.json']
+    path = ''
+    
+    filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
+    filtered = filter_annonations(annonations_name, path, filter_arg)
     annontions_names = get_annonations_name(lbls_path)
 
     annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
