@@ -79,23 +79,27 @@ def create_jsondict( name, elements, pth ):
         'labels' : labels
     }
 
-def save_json( jsn , save_path ):
+def save_json( jsn , save_path , singleLine = False):
     json_name = path.splitext(jsn['name'])[0] + ".json"
     with open(path.join(save_path , json_name) , 'w') as jsfile:
-        json.dump(jsn , jsfile)
+        if singleLine:
+            json.dump(jsn , jsfile)
+        else:   
+            json.dump(jsn , jsfile , indent= 4)
 
-def convert_csv_to_json(images_path , csv_path , save_path):
+def convert_csv_to_json(images_path , csv_path , save_path, singleLine = False):
 
     csv_file = csv_reader(csv_path)
     dict_lbl = csv2labelDict(csv_file)
-    
+    os.system('clear')
     print("Conversion Started. Please Wait...")
     counter = 0
     for key, val in dict_lbl.items():
         print(f"Converted Files: {counter} / {len(dict_lbl)}" , end = "\r")
         json_dict = create_jsondict(key , val , images_path)
-        save_json(json_dict , save_path)   
+        save_json(json_dict , save_path, singleLine)   
         counter += 1
+    print(f"Converted Files: {counter} / {len(dict_lbl)}\nConversion Finished. \n")
 
 def get_img_shape( img ):
     return img.shape[:2]
@@ -112,8 +116,15 @@ def find_colormode( image , threshold = 20 ):
     else:
         return "COLOR"
 
-images_path = r"./severstal-steel-defect-detection/train_images"
-csv_path = r"./severstal-steel-defect-detection/train.csv"
-save_path = r"./severstal-steel-defect-detection/jsons"
 
-convert_csv_to_json(images_path , csv_path , save_path)
+
+
+def main():
+    images_path = r"./severstal-steel-defect-detection/train_images"
+    csv_path = r"./severstal-steel-defect-detection/train.csv"
+    save_path = r"./severstal-steel-defect-detection/jsons"
+
+    convert_csv_to_json(images_path , csv_path , save_path , singleLine = True)
+
+if __name__ == "__main__":
+    main()
