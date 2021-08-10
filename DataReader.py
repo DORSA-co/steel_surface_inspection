@@ -16,18 +16,16 @@ imgs_path = 'severstal-steel-defect-detection/train_images'
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   a class for save labels of image. it contains mask, class and bbox labels
-#
+#   a class for  masks of image. it contains maskes and their classes
 #atribiut:
-#   class: object class number
-#   mask: object mask in format of [[start px, end px],...]
-#   self.bbox: TBD
+#   classes: array of classes Id
+#   codedMaskes_: array of masks in format of [[start px, end px],...]
 #______________________________________________________________________________________________________________________________________________
-class Label():
+class Mask():
     def __init__(self):
         self.class_ = None
-        self.mask_ = None
-        self.bbox_ = None
+        self.codedMask_ = None
+        
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -141,16 +139,14 @@ class Annotation():
         assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
         labels = self.annotation['labels']
-        labels_list = []
+        mask_list = []
         for lbl in labels:
             print(lbl.keys())
-            c = lbl['class']
-            m = lbl['mask']
-            lbl_obj = Label()
-            lbl_obj.class_ = c
-            lbl_obj.mask_ = np.array(m).reshape((-1,2)).astype(np.int32)
-            labels_list.append(lbl_obj)
-        return labels_list
+            msk_obj = Mask()
+            msk_obj.class_ = int(lbl['class'])
+            msk_obj.mask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            mask_list.append(msk_obj)
+        return mask_list
 
 
 
@@ -315,13 +311,14 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
 #return:
 #   image_mask = a mask that shows the location of the certain defects
 #______________________________________________________________________________________________________________________________________________
-def _conv_label_to_mask(lbl , height = 256 , width = 1600):
+def _encoded_mask(coded_mask , height = 256 , width = 1600):
     # Lbl is an np.array
-    lbl_mod = lbl.copy()
+    lbl_mod = mask_raw.copy()
     lbl_mod[:,1] += lbl_mod[:,0]
   
     mask = np.zeros((height * width))
 
+    def assign_val(coded_)
     for lbl in lbl_mod:
         mask[lbl[0]:lbl[1]] = 255
 
@@ -400,18 +397,19 @@ def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 ,
 
 
 
-'''
+if __name__ == '__main__':
+    '''
 
-csv_list = csv_reader(csv_path)
-dict_lbl = csv2labelDict(csv_list)
-imgs_list,b =  get_imgs_list(img_path)
+    csv_list = csv_reader(csv_path)
+    dict_lbl = csv2labelDict(csv_list)
+    imgs_list,b =  get_imgs_list(img_path)
 
-bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
-classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
+    bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
+    classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
 
-'''
-lbls_train_list,lbls_val_list = get_labels_name_list(lbls_path)
-annotations = read_label(lbls_train_list,lbls_path)
-imgs,lbls = get_binary_datasets(annotations[:64])
-js = Annotation('Json_sample.json')
+    '''
+    lbls_train_list,lbls_val_list = get_labels_name_list(lbls_path)
+    annotations = read_label(lbls_train_list,lbls_path)
+    imgs,lbls = get_binary_datasets(annotations[:64])
+    js = Annotation('Json_sample.json')
