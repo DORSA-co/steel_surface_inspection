@@ -135,7 +135,7 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
             return fn_extended[:-1][0] , fn_extended[-1] 
     
     json_path_list_reduced = list(
-        map(lambda inp: reduce_path(inp , json_path) , json_path_list)
+        map(lambda inp: reduce_path(inp , json_path)[0] , json_path_list)
     )
 
     image_path_list_reduced = list(
@@ -145,9 +145,8 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
     # print(json_path_list_reduced)
     total = len(image_path_list_reduced)
     iteration = 1
-    
-    print("Creating label for unlabled images. Please Wait... ")
 
+    print("\nCreating label for unlabled images. Please Wait...")
     for i_fname , i_fname_extension in image_path_list_reduced:
         printProgressBar (iteration, total, prefix = 'Creating JSONS', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
         if  not i_fname in json_path_list_reduced:
@@ -161,7 +160,7 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
                 'path': image_path,
                 'color_mode': color_mode,
                 'size': list(img_shape),
-                'included_object': 'YES',
+                'included_object': 'NO',
                 'label_type': '',
                 'labels' : ''
             }
