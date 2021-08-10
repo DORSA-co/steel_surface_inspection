@@ -469,7 +469,6 @@ if __name__ == '__main__':
     bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
     classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
-
     '''
     
     annonations_name = ['Json_sample.json']
@@ -483,3 +482,4 @@ if __name__ == '__main__':
     annotations = read_annotations(annontions_names_train,lbls_path)
     imgs,lbls = get_binary_datasets(annotations[:1000])
     js = Annotation('Json_sample.json')
+
