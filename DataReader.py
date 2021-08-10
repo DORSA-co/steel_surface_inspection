@@ -119,7 +119,7 @@ class Annotation():
         return self.annotation['path']
 
     def get_fullpath(self):
-        return os.path.join(self.annotation['path'], self.annotation['fname'] )
+        return os.path.join(self.annotation['path'], self.annotation['name'] )
 
     def get_img(self):
         return cv2.imread( self.get_fullpath() )
@@ -184,42 +184,42 @@ class Annotation():
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get path of labels and return list of labels_name ( json file's name )
+#   get path of annonations and return list of annonations_name ( json file's name )
 #
 #arg:
 #   path: path of json labels
-#   split: a float number that determine amount of split
 #   shuffle: if True, the labels list shuffle
 #
 #return:
-#   lbls_list
-#   lbls_train_list: list of lbl_file_name ( jason file's name)
+#   annonations_name_list
+#   annonations_name_list: list of annontions_file_name ( jason file's name)
 #______________________________________________________________________________________________________________________________________________
-def get_labels_name_list(lbls_path, split=0.2, shuffle=True):
-    lbls_list = os.listdir(lbls_path)
+def get_annonations_name(path, shuffle=True):
+    annonations_name_list = os.listdir(path)
     if shuffle:
-        random.shuffle(lbls_list)
-    return lbls_list
+        random.shuffle(annonations_name_list)
+    return annonations_name_list
+
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get list of lbl_file_name ( jason file's name) and split into val and train lbl_file_name list
+#   get list of annonation_file_name ( jason file's name) and split into val and train annonation_file_name list
 #
 #arg:
-#   lbls_train_list: list of lbl_file_name ( jason file's name)
+#   annonations_name_list: list of an_file_name ( jason file's name)
 #   split: a float number that determine amount of split
 #   shuffle: if True, the labels list shuffle
 #
 #return:
-#   lbls_train_list, lbls_train_list
-#   lbls_train_list: list of lbl_file_name for train
-#   lbls_train_list: list of lbl_file_name for validation
+#   annonations_train_list, annonations_val_list
+#   annonations_train_list: list of list of lbl_file_name for validation_file_name for validation
+#   annonations_val_list: list of annontions_file_name for validation
 #______________________________________________________________________________________________________________________________________________
-def split_labels_name_list(lbls_list, split=0.2, shuffle=True):
-    lbls_count = len(lbls_list)
-    lbls_val_list   = lbls_list[ : int(lbls_count * split)]
-    lbls_train_list = lbls_list[ int(lbls_count * split) : ]
-    return lbls_train_list, lbls_val_list
+def split_annonations_name(annonations_name_list, split=0.2, shuffle=True):
+    lbls_count = len(annonations_name_list)
+    annonations_val_list   = annonations_name_list[ : int(lbls_count * split)]
+    annonations_train_list = annonations_name_list[ int(lbls_count * split) : ]
+    return annonations_train_list, annonations_val_list
 
 
 
@@ -236,7 +236,7 @@ def split_labels_name_list(lbls_list, split=0.2, shuffle=True):
 #   labels : a annoation of label in annotation() class format
 #
 #______________________________________________________________________________________________________________________________________________
-def read_label(lbls_list, lbls_path):
+def read_annotations(lbls_list, lbls_path):
     labels = []
     for lbl_name in lbls_list:
         labels.append( Annotation( os.path.join( lbls_path, lbl_name ))  )
@@ -331,7 +331,8 @@ def _encoded_mask(coded_mask , height = 256 , width = 1600):
   
     mask = np.zeros((height * width))
 
-    def assign_val(coded_)
+    def assign_val(coded_):
+        pass
     for lbl in lbl_mod:
         mask[lbl[0]:lbl[1]] = 255
 
@@ -422,7 +423,9 @@ if __name__ == '__main__':
 
 
     '''
-    lbls_train_list,lbls_val_list = get_labels_name_list(lbls_path)
-    annotations = read_label(lbls_train_list,lbls_path)
-    imgs,lbls = get_binary_datasets(annotations[:64])
+    annontions_names = get_annonations_name(lbls_path)
+
+    annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
+    annotations = read_annotations(annontions_names_train,lbls_path)
+    imgs,lbls = get_binary_datasets(annotations[:1000])
     js = Annotation('Json_sample.json')
