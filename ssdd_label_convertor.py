@@ -2,7 +2,8 @@ import csv
 import os
 import numpy as np
 import cv2
-
+from os import path
+import json
 #______________________________________________________________________________________________________________________________________________
 #expalin:
 #   read csv file from path and return csv list
@@ -56,9 +57,9 @@ def csv2labelDict( csv_list ):
 
 
 ## A function for creating single Json file's string
-def create_jsondict( name, elements, path ):
+def create_jsondict( name, elements, pth ):
     # read element
-    img = cv2.imread(os.path.join(path , name))
+    img = cv2.imread( path.join(pth , name) )
 
     color_mode = find_colormode(img)
     img_shape = get_img_shape(img)
@@ -66,23 +67,35 @@ def create_jsondict( name, elements, path ):
     labels = []
     for idx , cls in enumerate(elements[0]):
         labels_list = elements[1][idx].tolist()
-        dic_tmp = {'class': cls , 'labels': labels_list}
+        dic_tmp = {'class': cls , 'mask': labels_list}
         labels.append(dic_tmp)
 
     return {
         'name': name,
-        'path': path,
+        'path': pth,
         'color_mode': color_mode,
         'size': list(img_shape),
         'label_type': 'MASK',
         'labels' : labels
     }
 
-def save_json( json , save_path ):
-    pass
+def save_json( jsn , save_path ):
+    json_name = path.splitext(jsn['name'])[0] + ".json"
+    with open(path.join(save_path , json_name) , 'w') as jsfile:
+        json.dump(jsn , jsfile)
 
-def convert_csv_to_json():
-    pass
+def convert_csv_to_json(images_path , csv_path , save_path):
+
+    csv_file = csv_reader(csv_path)
+    dict_lbl = csv2labelDict(csv_file)
+    
+    print("Conversion Started. Please Wait...")
+    counter = 0
+    for key, val in dict_lbl.items():
+        print(f"Converted Files: {counter} / {len(dict_lbl)}" , end = "\r")
+        json_dict = create_jsondict(key , val , images_path)
+        save_json(json_dict , save_path)   
+        counter += 1
 
 def get_img_shape( img ):
     return img.shape[:2]
@@ -98,18 +111,9 @@ def find_colormode( image , threshold = 20 ):
     
     else:
         return "COLOR"
- 
-# img = cv2.imread("./123.jpg")
-# img = cv2.imread("./severstal-steel-defect-detection/train_images/00c6060db.jpg")
-# print(find_colormode(img) , get_img_shape(img))
 
-path = "./severstal-steel-defect-detection/train_images"
-csv_path = "./severstal-steel-defect-detection/train.csv"
+images_path = r"./severstal-steel-defect-detection/train_images"
+csv_path = r"./severstal-steel-defect-detection/train.csv"
+save_path = r"./severstal-steel-defect-detection/jsons"
 
-csv_file = csv_reader(csv_path)
-dict_lbl = csv2labelDict(csv_file)
-json_dict = create_jsondict("00e0398ad.jpg" , dict_lbl["00e0398ad.jpg"] , path)
-print(json_dict)
-
-# cv2.imshow("img", img)
-# cv2.waitKey()
+convert_csv_to_json(images_path , csv_path , save_path)
