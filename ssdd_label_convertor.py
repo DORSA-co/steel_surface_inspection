@@ -161,7 +161,7 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
                 'path': image_path,
                 'color_mode': color_mode,
                 'size': list(img_shape),
-                'included_object': 'YES',
+                'included_object': 'NO',
                 'label_type': '',
                 'labels' : ''
             }
