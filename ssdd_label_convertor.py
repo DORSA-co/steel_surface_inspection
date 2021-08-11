@@ -286,5 +286,6 @@ def main():
     csv_path = r"./severstal-steel-defect-detection/train.csv"
     json_save_path = r"./severstal-steel-defect-detection/annotations"
     create_all_json(images_path , csv_path , json_save_path)
+
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 import csv
 import os
+from typing_extensions import Annotated
 import numpy as np
 import cv2
 from numpy.core.fromnumeric import reshape
@@ -9,24 +10,22 @@ from sys import getsizeof
 
 import json
 
-csv_path = 'severstal-steel-defect-detection/train.csv'
-img_path = 'severstal-steel-defect-detection/train_images'
+lbls_path = 'severstal-steel-defect-detection/annotations'
+imgs_path = 'severstal-steel-defect-detection/train_images'
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   a class for save labels of image. it contains mask, class and bbox labels
-#
+#   a class for  masks of image. it contains maskes and their classes
 #atribiut:
-#   class: object class number
-#   mask: object mask in format of [[start px, end px],...]
-#   self.bbox: TBD
+#   classes: array of classes Id
+#   codedMaskes_: array of masks in format of [[start px, end px],...]
 #______________________________________________________________________________________________________________________________________________
-class Label():
+class Mask():
     def __init__(self):
         self.class_ = None
-        self.mask_ = None
-        self.bbox_ = None
+        self.codedMask_ = None
+        
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -102,7 +101,7 @@ class Label():
 #           return True, type of localisation's label is bounding box format
 #   -------------------------------
 #______________________________________________________________________________________________________________________________________________
-class jsonReader():
+class Annotation():
 
     def __read__(self, path):
         with open(path) as jfile:
@@ -114,18 +113,22 @@ class jsonReader():
         self.annotation = self.__read__(path)
 
     def get_fname(self):
-        return self.annotation['fname']
+        return self.annotation['name']
 
     def get_path(self):
         return self.annotation['path']
 
     def get_fullpath(self):
-        return os.path.join(self.annotation['path'], self.annotation['fname'] )
+        return os.path.join(self.annotation['path'], self.annotation['name'] )
+
+    def get_img(self):
+        return cv2.imread( self.get_fullpath() )
 
     def get_img_size(self):
         return tuple( self.annotation['size'] )
 
     def get_classes(self):
+        assert self.have_object(), "There is no object"
         classes = []
         labels = self.annotation['labels']
         for lbl in labels:
@@ -133,24 +136,24 @@ class jsonReader():
         return np.array(classes)
     
     def get_masks(self):
+        assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
         labels = self.annotation['labels']
-        labels_list = []
+        mask_list = []
         for lbl in labels:
             print(lbl.keys())
-            c = lbl['class']
-            m = lbl['mask']
-            lbl_obj = Label()
-            lbl_obj.class_ = c
-            lbl_obj.mask_ = np.array(m).reshape((-1,2)).astype(np.int32)
-            labels_list.append(lbl_obj)
-        return labels_list
+            msk_obj = Mask()
+            msk_obj.class_ = int(lbl['class'])
+            msk_obj.mask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            mask_list.append(msk_obj)
+        return mask_list
 
 
 
 
     
     def get_bboxs(self):
+        assert self.have_object(), "There is no object"
         assert self.is_lbl_bbox(), "Label type is not bounding box"
 
 
@@ -161,101 +164,197 @@ class jsonReader():
         return self.annotation['color_mode'] == 'GRAY'
 
     def is_lbl_mask(self):  
+        assert self.have_object(), "There is no object"
         return self.annotation['label_type'] == 'MASK'
 
     def is_lbl_bbox(self):  
+        assert self.have_object(), "There is no object"
         return self.annotation['label_type'] == 'BBOX'
+
+    def have_object(self):  
+        return self.annotation['included_object'] == 'YES'
+    
     
     
         
        
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   filter annonation_name list base of filter_arg 
+#
+#arg:
+#   annonation_name: list of annonation's name
+#
+#   path: path of annonations folder
+#
+#   filter_arg: it is a dictionay. it's key are same as annonation jason file, e.g "label_type", "color_mode" and etc, and
+#   their values are a list of acceptabel values for related features. this Values are or by each other. it's also accept
+#   the "class" key and don't accept "label" key for e.g if the filter_arg be { 'label_type':["MASK"], "class":[1,2] }
+#   it pass annonations that their label_type are "MASK" and their object's class consist one of 1 or 2 class or both of them
+#   
+#
+#return:
+#   filtered
+#   filtered: list of annontions_file_name that pass filters
+#______________________________________________________________________________________________________________________________________________
+def filter_annonations(annonations_name, path,filter_arg):
 
+    def filter_func(annotation_name):
+
+        with open(os.path.join(path,annotation_name)) as jfile:
+            annonation_dict = json.load(jfile)
+        
+        for filter_key, filter_values in filter_arg.items():
+            if filter_key == 'class':
+                classes =[]
+                labels = annonation_dict['labels']
+                for lbl in labels:
+                    classes.append( lbl['class'])
+
+                flag = False
+                for c in classes:
+                    if c  in filter_values:
+                        flag =  True
+                if not flag:
+                    return False                  
+            else :
+                if annonation_dict[filter_key] not in filter_values:
+                    return False
+        
+        return True
+
+    filtered = list( filter( filter_func, annonations_name))
+    return filtered
 
 
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get path of images and split into val and train images_name list
+#   get path of annonations and return list of annonations_name ( json file's name )
 #
 #arg:
-#   path: path of images
-#   split: a float number that determine amount of split
-#   shuffle: if True, the images list shuffle
+#   path: path of json labels
+#   shuffle: if True, the labels list shuffle
 #
 #return:
-#   train_list, val_list
-#   train_list: list of images_name for train
-#   val_list: list of images_name for validation
+#   annonations_name_list
+#   annonations_name_list: list of annontions_file_name ( jason file's name)
 #______________________________________________________________________________________________________________________________________________
-def get_imgs_list(path, split=0.2, shuffle=True):
-    imgs_list = os.listdir(img_path)
-
+def get_annonations_name(path, shuffle=True):
+    annonations_name_list = os.listdir(path)
     if shuffle:
-        random.shuffle(imgs_list)
-    imgs_count = len(imgs_list)
-    val_list   = imgs_list[ : int(imgs_count * split)]
-    train_list = imgs_list[ int(imgs_count * split) : ]
-    return train_list, val_list
-
-
-
+        random.shuffle(annonations_name_list)
+    return annonations_name_list
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get dict_lbl( from csv2labelDict ) and images_name_list (from get_imgs_list()) and return binary label array
-#   0: no defect
-#   1: has defect
+#   get list of annonation_file_name ( jason file's name) and split into val and train annonation_file_name list
+#
 #arg:
-#   dict_lbl: dictionary label that returned from csv2labelDict function
-#   imgs_list: a batch or full list of imags_name that we want get their binary label
+#   annonations_name_list: list of an_file_name ( jason file's name)
+#   split: a float number that determine amount of split
+#   shuffle: if True, the labels list shuffle
 #
 #return:
-#   binary_lbl, imgs_list
-#   binary_lbl: binary label of imgs_list that is a 1d numpy array 
-#   imgs_list: it is excatly imgs_list aurguman
+#   annonations_train_list, annonations_val_list
+#   annonations_train_list: list of list of lbl_file_name for validation_file_name for validation
+#   annonations_val_list: list of annontions_file_name for validation
 #______________________________________________________________________________________________________________________________________________
-def get_binary_labels( dict_lbl, imgs_list ):
-    binary_lbl_func = lambda x: 1 if x in dict_lbl.keys() else 0
-    binary_lbl = np.array( list(map( binary_lbl_func , imgs_list)) )
-    return binary_lbl,imgs_list
+def split_annonations_name(annonations_name_list, split=0.2, shuffle=True):
+    lbls_count = len(annonations_name_list)
+    annonations_val_list   = annonations_name_list[ : int(lbls_count * split)]
+    annonations_train_list = annonations_name_list[ int(lbls_count * split) : ]
+    return annonations_train_list, annonations_val_list
 
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get dict_lbl( from csv2labelDict ) and images_name_list (from get_imgs_list()) and return mult classfication label in one hot code
+#   get path of labels and a list of labels and return list of labels in annotation() class format
 #
 #arg:
-#   dict_lbl: dictionary label that returned from csv2labelDict function
-#   imgs_list: a batch or full list of imags_name that we want get their binary label
-#   class_num: number of class. background class shouldn't acount
-#   no_defect: if True, it Allocates a new class to no defect. it's class is 0 class
+#   lbls_list: list of labels name
+#   lbls_path: path of folder of labels 
+#
+#return:
+#   labels
+#   labels : a annoation of label in annotation() class format
+#
+#______________________________________________________________________________________________________________________________________________
+def read_annotations(lbls_list, lbls_path):
+    labels = []
+    for lbl_name in lbls_list:
+        labels.append( Annotation( os.path.join( lbls_path, lbl_name ))  )
+    return labels
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get anonations list and return images and binary labels
+#   0: no object
+#   1: has object
+#arg:
+#   annotations: a batch or full list of instance of annonation() class
+#
+#return:
+#   imgs, lbls
+#   imgs: batch of images
+#   lbls: batch of binary labels
+#______________________________________________________________________________________________________________________________________________
+def get_binary_datasets( annotations ):
+    
+    lbls = []
+    imgs = []
+    for annotation in annotations:
+        lbls.append( int(annotation.have_object()) )
+        imgs.append( annotation.get_img())
+
+    return np.array(imgs),np.array(lbls )
+
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get a list of anonations( instance of Anonation() class ) and return images and class labels
+#
+#arg:
+#   annotations , class_num, consider_no_object
+#   annotations: a batch or full list of instance of anonations( instance of Anonation() class ) it obtaon from read_label() function
+#   class_num: number of class. no_object class shouldn't acount
+#   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
 #
 #return:
 #   class_lbl, imgs_list
 #   class_lbl: classification label for images_name_list
 #   imgs_list: it is excatly imgs_list aurguman
 #______________________________________________________________________________________________________________________________________________
-def get_class_labels(dict_lbl, imgs_list, class_num, no_defect=False):
-    def class_lbl_func(img_name):
-        _class_ = np.zeros((class_num,))
-        if img_name in dict_lbl.keys():
-            img_class = np.array( dict_lbl[img_name][0] )
-            _class_[ img_class ] = 1
-        if no_defect:
-            #if no defect, no_defect class value should be 1 else 0
-            if np.sum(_class_) == 0:
-                _class_ = np.insert(_class_,0,1)
-            else:
-                _class_ = np.insert(_class_,0,0)
-        return _class_
+def get_class_datasets(annotations, class_num, consider_no_object=False):
 
-    classes_lbl = list( map( class_lbl_func, imgs_list))
-    classes_lbl = np.array( classes_lbl)
-    return classes_lbl,imgs_list
+    lbls = []
+    imgs = []
+    for annotation in annotations:
+        lbl =  np.zeros((class_num,))
+
+        if annotation.have_object():
+            classes = annotation.get_classes()
+            classes - 1 #in json file class started ferm numer 1
+            lbl[classes] = 1
+        
+        if consider_no_object:
+            #if no defect, no_defect class value should be 1 else 0
+            if np.sum(lbl) == 0:
+                lbl = np.insert(lbl,0,1)
+            else:
+                lbl = np.insert(lbl,0,0)
+        
+        lbls.append( lbl )
+        imgs.append( annotation.get_img())
+
+
+    return np.array(imgs),np.array(lbls )
 
 
 
@@ -273,13 +372,15 @@ def get_class_labels(dict_lbl, imgs_list, class_num, no_defect=False):
 #return:
 #   image_mask = a mask that shows the location of the certain defects
 #______________________________________________________________________________________________________________________________________________
-def _conv_label_to_mask(lbl , height = 256 , width = 1600):
+def _encoded_mask(coded_mask , height = 256 , width = 1600):
     # Lbl is an np.array
-    lbl_mod = lbl.copy()
+    lbl_mod = mask_raw.copy()
     lbl_mod[:,1] += lbl_mod[:,0]
   
     mask = np.zeros((height * width))
 
+    def assign_val(coded_):
+        pass
     for lbl in lbl_mod:
         mask[lbl[0]:lbl[1]] = 255
 
@@ -358,16 +459,27 @@ def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 ,
 
 
 
-'''
+if __name__ == '__main__':
+    '''
 
-csv_list = csv_reader(csv_path)
-dict_lbl = csv2labelDict(csv_list)
-imgs_list,b =  get_imgs_list(img_path)
+    csv_list = csv_reader(csv_path)
+    dict_lbl = csv2labelDict(csv_list)
+    imgs_list,b =  get_imgs_list(img_path)
 
-bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
-classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
+    bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
+    classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
 
+    '''
+    
+    annonations_name = ['Json_sample.json']
+    path = ''
+    
+    filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
+    filtered = filter_annonations(annonations_name, path, filter_arg)
+    annontions_names = get_annonations_name(lbls_path)
 
-'''
+    annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
+    annotations = read_annotations(annontions_names_train,lbls_path)
+    imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
+    js = Annotation('Json_sample.json')
 
-js = jsonReader('Json_sample.json')
