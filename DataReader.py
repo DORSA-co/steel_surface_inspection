@@ -174,7 +174,7 @@ class Annotation():
         mask_list = []
 
         for lbl in labels:
-            print(lbl.keys())
+            
             msk_obj = Mask()
             msk_obj.refrenced_size_ = self.get_img_size()
             msk_obj.class_ = int(lbl['class'])
@@ -232,7 +232,7 @@ class Annotation():
 
                 assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
 
-                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
+                return [cls] , [self.get_encoded_mask(cls = cls - 1)[0].encode_mask()]
 
         else:
             if cls == None:
@@ -245,9 +245,9 @@ class Annotation():
                 return classes , devcoded_masks
 
             else:
-                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+                assert self.is_class_valid(cls), "Requested mask-class is not valid!"
 
-                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
+                return [cls] , [self.get_encoded_mask(cls = cls)[0].encode_mask()]
 
 
 
@@ -511,4 +511,4 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
     js = Annotation(os.path.join(path , '470a96423.json' ))
-    print(js.get_decoded_masks())
+    print(js.get_decoded_masks(cls= 3 , considerBackground=True))
