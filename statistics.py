@@ -4,6 +4,15 @@ from matplotlib import pyplot as plt
 from DataReader import Annotation
 import os
 
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   draw histogram of binary labels 
+#atribiut:
+#   annonation_path: path of annonations folder( jason files)
+#   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
+#______________________________________________________________________________________________________________________________________________
+
 def binary_hist(annonation_path, annonations_name=None):
 
     if annonations_name is None:
@@ -34,7 +43,13 @@ def binary_hist(annonation_path, annonations_name=None):
 
 
 
-
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   draw histogram of class labels 
+#atribiut:
+#   annonation_path: path of annonations folder( jason files)
+#   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
+#______________________________________________________________________________________________________________________________________________
 def class_hist( annonation_path , annonations_name=None ):
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
@@ -55,6 +70,9 @@ def class_hist( annonation_path , annonations_name=None ):
     bar = ax.bar(classes_id,counts, width=0.3)
     ax.bar_label(bar, label_type='center', color='w')
     plt.show()
+
+
+
 
 
 csv_path = 'severstal-steel-defect-detection/train.csv'
