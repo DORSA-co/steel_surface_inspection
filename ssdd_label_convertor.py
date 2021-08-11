@@ -55,6 +55,12 @@ def csv2labelDict( csv_list ):
     return dict_lbl
 
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   ->A function which creates a progress bar in console, full documentation in the link bellow. Check out the comments in the
+#       code itself.
+#       link: https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+#______________________________________________________________________________________________________________________________________________
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
@@ -76,7 +82,18 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     if iteration == total: 
         print()
 
-
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Base on a filename, a path and an element of the dict_label (output of csv2labelDict), it creates a dictinoray with the JSON
+#       template provided in Json_sample.json.
+#arg:
+#   name: file name
+#   element: an element of dict_lable (output of csv2labelDict)
+#   pth: save path of the image
+#
+#return:
+#   (dict) -> Coresponding to Json_sample.json file
+#______________________________________________________________________________________________________________________________________________
 def _create_jsondict( name, elements, pth ):
     # read element
     img = cv2.imread( path.join(pth , name) )
@@ -100,6 +117,19 @@ def _create_jsondict( name, elements, pth ):
         'labels' : labels
     }
 
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Gets an output path and a dict var (logicaly the output of _create_jsondict) and saves the JSON of that dict in the provided 
+#       path. If singleLine == True, it dosen't format the JSON and put's everything in one line.
+#arg:
+#   jsn: an input dictionary which decribes the value to be written
+#   save_path: location to store the json.
+#   singleLine: bool, True if you want to save everything in a single line.
+#return:
+#   
+#______________________________________________________________________________________________________________________________________________
 def _save_json( jsn , save_path , singleLine = False):
     json_name = path.splitext(jsn['name'])[0] + ".json"
     with open(path.join(save_path , json_name) , 'w') as jsfile:
@@ -108,13 +138,25 @@ def _save_json( jsn , save_path , singleLine = False):
         else:   
             json.dump(jsn , jsfile , indent= 4)
 
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Creates apropritae JSON files, using the train.csv file
+#arg:
+#   images_path: path where the images are stored
+#   csv_path: location of train.csv file
+#   save_path: where to store jsons
+#   singleLine: bool, True if you want to save jsons with single line.
+#return:
+#   
+#______________________________________________________________________________________________________________________________________________
 def convert_csv_to_json(images_path , csv_path , save_path, singleLine = False):
 
     csv_file = csv_reader(csv_path)
     dict_lbl = csv2labelDict(csv_file)
 
     print("Conversion Started. Please Wait...")
-    counter = 0
+    counter = 1
     total = len(dict_lbl.items())
     for key, val in dict_lbl.items():
         printProgressBar (counter, total, prefix = f'{"Converting CSV to JSON": <25}', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
@@ -123,6 +165,18 @@ def convert_csv_to_json(images_path , csv_path , save_path, singleLine = False):
         counter += 1
 
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Using the json files saved by the convert_csv_to_jsons, it compares all the images with the saved json files and creates new,
+#       jsons with empyt label and "included_object: NO" for the unlabeled images.
+#arg:
+#   image_path: path where the images are stored
+#   json_path: location where the json files are stored
+#   singleLine: bool, True if you want to save jsons with single line.
+#
+#return:
+#   
+#______________________________________________________________________________________________________________________________________________
 def create_json_for_unlabeled_image(image_path , json_path , singleLine = False):
 
     json_path_list = os.listdir(json_path)
@@ -169,40 +223,61 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
         iteration += 1
 
 
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Returns the size of the image
+#
+#arg:
+#   img: ( np.ndarray() ) input image file
+#
+#return:
+#   tuple(height , width)
+#______________________________________________________________________________________________________________________________________________
 def _get_img_shape( img ):
     return img.shape[:2]
 
-def _print_progress_bar(max = 100 , cur = 0):
-    print("")
 
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Returns the color mode, "COLOR" for colored images and "GRAY" for grayscale images by comparing color chanels to each other.
+#
+#arg:
+#   image: ( np.ndarray() ) input image file
+#   threshold:  the threshold error for comparing image chanels.
+#
+#return:
+#   "GRAY" for grayscale images and "COLOR" for colored images
+#______________________________________________________________________________________________________________________________________________
 def _find_colormode( image , threshold = 20 ):
     b_g = np.abs( image[:,:,0] - image[:,:,1] )
     g_r = np.abs( image[:,:,1] - image[:,:,2] )
     b_r = np.abs( image[:,:,0] - image[:,:,2] )
 
     if np.sum(b_g) < threshold and np.sum(g_r) < threshold and np.sum(b_r) < threshold:
-        return "GRAYS"
+        return "GRAY"
     
     else:
         return "COLOR"
 
-# def _pretify_lists(json_path):
-#     print(json_path)
-#     print(path.exists(json_path))
 
-#     with open(json_path , "+r") as file:
-#         str_file = file.read()
-#         split_str = str_file.split('"mask"')
-#         split_str[1] = split_str[1].replace("\n" , "").replace(" " , "")
-#         file.seek(0)
-#         file.write(split_str[0]+split_str[1])
-
-def create_all_json(image_path , csv_path , json_save_path):
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   -> Creates all json files for the dataset
+#arg:
+#   images_path: path where the images are stored
+#   csv_path: location of train.csv file
+#   json_save_path: where to store jsons
+#   singleLine: bool, True if you want to save jsons with single line.
+#return:
+#   
+#______________________________________________________________________________________________________________________________________________
+def create_all_json(image_path , csv_path , json_save_path , singleLine = False):
 
     os.system('clear')
-    convert_csv_to_json(image_path , csv_path , json_save_path , singleLine = False)
-    create_json_for_unlabeled_image(image_path , json_save_path , singleLine = False )
-    print("\n","\033[92m" + "Conversion Finished Successfully!" + '\033[0m')
+    convert_csv_to_json(image_path , csv_path , json_save_path , singleLine = singleLine)
+    create_json_for_unlabeled_image(image_path , json_save_path , singleLine = singleLine )
+    print("\n","\033[92m" + ".::Conversion Finished Successfully!::.\n" + '\033[0m')
 
 def main():
     # _pretify_lists(r'.\severstal-steel-defect-detection\annotations\000a4bcdd.json')
