@@ -178,7 +178,7 @@ class Annotation():
             msk_obj = Mask()
             msk_obj.refrenced_size_ = self.get_img_size()
             msk_obj.class_ = int(lbl['class'])
-            msk_obj.mask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            msk_obj.codedMask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
 
             if (cls == msk_obj.class_):
                 return [msk_obj]
@@ -186,6 +186,75 @@ class Annotation():
             mask_list.append(msk_obj)
 
         return mask_list
+
+
+
+    def get_decoded_masks(self,  cls = None , considerBackground = False , **kwargs ):
+
+        height , width = self.get_img_size()
+
+        raw_masks = self.get_encoded_mask()
+
+        def calc_background_mask():
+
+            raw_masks_decoded = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+
+            all_masks = np.sum(raw_masks_decoded , axis = 0).clip(0 , 255)
+            all_masks -= 255
+            all_masks *= -1
+
+            return all_masks
+
+        if considerBackground:
+            # Add all classes by one
+
+            if cls == None:
+                classes = list(
+                    map(lambda x: x.class_ + 1 , raw_masks)
+                )
+
+                encoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask() , raw_masks ) )
+                )
+
+                classes.append(0)
+
+                np.append( encoded_masks , 0 , calc_background_mask() , axis = 0)
+
+                return classes , encoded_masks
+
+            elif cls == 0:
+                return [0] , [calc_background_mask()]
+
+            else:
+
+                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
+
+        else:
+            if cls == None:
+                
+                classes = self.get_classes()
+
+                devcoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+                return classes , devcoded_masks
+
+            else:
+                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
+
+
+
+    
+    def get_bboxs(self):
+        assert self.have_object(), "There is no object"
+        assert self.is_lbl_bbox(), "Label type is not bounding box"
 
     def is_class_valid(self , cls ):
         classes = self.get_classes()
@@ -195,12 +264,6 @@ class Annotation():
 
         else:
             return False
-
-    
-    def get_bboxs(self):
-        assert self.have_object(), "There is no object"
-        assert self.is_lbl_bbox(), "Label type is not bounding box"
-
 
     def is_color(self):
         return self.annotation['color_mode'] == 'COLOR'
@@ -448,4 +511,4 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
     js = Annotation(os.path.join(path , '470a96423.json' ))
-    print(js.get_encoded_mask(0)[0].mask_)
+    print(js.get_decoded_masks())
