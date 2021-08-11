@@ -25,6 +25,34 @@ class Mask():
     def __init__(self):
         self.class_ = None
         self.codedMask_ = None
+        self.refrenced_size_ = None
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
+    #
+    #arg:
+    #   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
+    #   width = image width
+    #   height = image height
+    #
+    #return:
+    #   image_mask = a mask that shows the location of the certain defects
+    #______________________________________________________________________________________________________________________________________________
+    def _encode_mask(self):
+        
+        ref_width = self.refrenced_size_[1]
+        ref_height = self.refrenced_size_[0]
+
+        coded_mask_mod = self.codedMask_.copy()
+        coded_mask_mod[:,1] += coded_mask_mod[:,0]
+    
+        mask = np.zeros((ref_height * ref_width))
+
+        for raw_mask in coded_mask_mod:
+            mask[raw_mask[0]:raw_mask[1]] = 255
+
+        return mask.reshape( (ref_width, ref_height) ).T
         
 
 
@@ -356,35 +384,6 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
 
     return np.array(imgs),np.array(lbls )
 
-
-
-
-
-#______________________________________________________________________________________________________________________________________________
-#explain:
-#   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
-#
-#arg:
-#   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
-#   width = image width
-#   height = image height
-#
-#return:
-#   image_mask = a mask that shows the location of the certain defects
-#______________________________________________________________________________________________________________________________________________
-def _encoded_mask(coded_mask , height = 256 , width = 1600):
-    # Lbl is an np.array
-    lbl_mod = mask_raw.copy()
-    lbl_mod[:,1] += lbl_mod[:,0]
-  
-    mask = np.zeros((height * width))
-
-    def assign_val(coded_):
-        pass
-    for lbl in lbl_mod:
-        mask[lbl[0]:lbl[1]] = 255
-
-    return mask.reshape((width,height)).T
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
