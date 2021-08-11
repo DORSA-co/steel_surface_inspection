@@ -117,7 +117,7 @@ def convert_csv_to_json(images_path , csv_path , save_path, singleLine = False):
     counter = 0
     total = len(dict_lbl.items())
     for key, val in dict_lbl.items():
-        printProgressBar (counter, total, prefix = 'Converting CSV to JSON', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
+        printProgressBar (counter, total, prefix = f'{"Converting CSV to JSON": <25}', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
         json_dict = _create_jsondict(key , val , images_path)
         _save_json(json_dict , save_path, singleLine)   
         counter += 1
@@ -146,9 +146,9 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
     total = len(image_path_list_reduced)
     iteration = 1
 
-    print("\nCreating label for unlabled images. Please Wait...")
+    print("\n\nCreating label for unlabled images. Please Wait...")
     for i_fname , i_fname_extension in image_path_list_reduced:
-        printProgressBar (iteration, total, prefix = 'Creating JSONS', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
+        printProgressBar (iteration, total, prefix = f'{"Creating JSONS": <25}', suffix = 'Completed', decimals = 1, length = 100, fill = '█', printEnd = "\r")
         if  not i_fname in json_path_list_reduced:
 
             img = cv2.imread( path.join(image_path , i_fname + i_fname_extension) )
@@ -166,7 +166,7 @@ def create_json_for_unlabeled_image(image_path , json_path , singleLine = False)
             }
 
             _save_json(temp_dic , json_path , singleLine = singleLine)
-            iteration += 1
+        iteration += 1
 
 
 def _get_img_shape( img ):
@@ -202,7 +202,7 @@ def create_all_json(image_path , csv_path , json_save_path):
     os.system('clear')
     convert_csv_to_json(image_path , csv_path , json_save_path , singleLine = False)
     create_json_for_unlabeled_image(image_path , json_save_path , singleLine = False )
-    print("Conversion Finished Successfully!")
+    print("\n","\033[92m" + "Conversion Finished Successfully!" + '\033[0m')
 
 def main():
     # _pretify_lists(r'.\severstal-steel-defect-detection\annotations\000a4bcdd.json')
