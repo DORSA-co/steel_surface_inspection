@@ -167,7 +167,8 @@ class Annotation():
         assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
 
-        # assert cls != None and self.is_class_valid(cls) , "Class Not Valid" 
+        if cls != None:
+            assert self.is_class_valid(cls) , "Class Not Valid" 
 
         labels = self.annotation['labels']
         mask_list = []
@@ -185,6 +186,16 @@ class Annotation():
             mask_list.append(msk_obj)
 
         return mask_list
+
+    def is_class_valid(self , cls ):
+        classes = self.get_classes()
+        
+        if cls in classes:
+            return True
+
+        else:
+            return False
+
     
     def get_bboxs(self):
         assert self.have_object(), "There is no object"
@@ -437,4 +448,4 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
     js = Annotation(os.path.join(path , '470a96423.json' ))
-    print(js.get_encoded_mask(cls = 2)[0].class_ , js.get_encoded_mask(cls = 2)[0].mask_)
+    print(js.get_encoded_mask(0)[0].mask_)
