@@ -167,7 +167,7 @@ class Annotation():
         assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
 
-        assert cls != None and self.is_class_valid(cls) , "Class Not Valid" 
+        # assert cls != None and self.is_class_valid(cls) , "Class Not Valid" 
 
         labels = self.annotation['labels']
         mask_list = []
@@ -416,25 +416,25 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
 
 if __name__ == '__main__':
     '''
-
     csv_list = csv_reader(csv_path)
     dict_lbl = csv2labelDict(csv_list)
     imgs_list,b =  get_imgs_list(img_path)
 
     bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
     classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
-
     '''
     
+        
     annonations_name = ['Json_sample.json']
-    path = ''
+    path = 'severstal-steel-defect-detection\\annotations'
     
-    filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
-    filtered = filter_annonations(annonations_name, path, filter_arg)
-    annontions_names = get_annonations_name(lbls_path)
+    # filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
+    # filtered = filter_annonations(annonations_name, path, filter_arg)
+    # annontions_names = get_annonations_name(lbls_path)
 
-    annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
-    annotations = read_annotations(annontions_names_train,lbls_path)
-    imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
-    js = Annotation('Json_sample.json')
+    # annontions_names_train, annontions_names_val = split_annonations_name(annontions_names)
+    # annotations = read_annotations(annontions_names_train,lbls_path)
+    # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
+    js = Annotation(os.path.join(path , '470a96423.json' ))
+    print(js.get_encoded_mask(cls = 2)[0].class_ , js.get_encoded_mask(cls = 2)[0].mask_)
