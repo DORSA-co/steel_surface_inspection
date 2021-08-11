@@ -39,14 +39,14 @@ class Mask():
     #return:
     #   image_mask = a mask that shows the location of the certain defects
     #______________________________________________________________________________________________________________________________________________
-    def _encode_mask(self):
+    def encode_mask(self):
         
         ref_width = self.refrenced_size_[1]
         ref_height = self.refrenced_size_[0]
 
         coded_mask_mod = self.codedMask_.copy()
         coded_mask_mod[:,1] += coded_mask_mod[:,0]
-    
+
         mask = np.zeros((ref_height * ref_width))
 
         for raw_mask in coded_mask_mod:
@@ -160,23 +160,100 @@ class Annotation():
         classes = []
         labels = self.annotation['labels']
         for lbl in labels:
-            classes.append( lbl['class'])
+            classes.append( int(lbl['class']) )
         return np.array(classes)
     
-    def get_masks(self):
+    def get_encoded_mask(self, cls = None):
         assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
+
+        assert cls != None and self.is_class_valid(cls) , "Class Not Valid" 
+
         labels = self.annotation['labels']
         mask_list = []
+
         for lbl in labels:
             print(lbl.keys())
             msk_obj = Mask()
+            msk_obj.refrenced_size_ = self.get_img_size()
             msk_obj.class_ = int(lbl['class'])
             msk_obj.mask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+
+            if (cls == msk_obj.class_):
+                return [msk_obj]
+            
             mask_list.append(msk_obj)
+
         return mask_list
 
+    def is_class_valid(self , cls ):
+        classes = self.get_classes()
+        
+        if cls in classes:
+            return True
 
+        else:
+            return False
+
+    def get_decoded_masks(self,  cls = None , considerBackground = False , **kwargs ):
+
+        height , width = self.get_img_size()
+
+        raw_masks = self.get_encoded_mask()
+
+        def calc_background_mask():
+
+            raw_masks_decoded = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+
+            all_masks = np.sum(raw_masks_decoded , axis = 0).clip(0 , 255)
+            all_masks -= 255
+            all_masks *= -1
+
+            return all_masks
+
+        if considerBackground:
+            # Add all classes by one
+
+            if cls == None:
+                classes = list(
+                    map(lambda x: x.class_ + 1 , raw_masks)
+                )
+
+                encoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask() , raw_masks ) )
+                )
+
+                classes.append(0)
+
+                np.append( encoded_masks , 0 , calc_background_mask() , axis = 0)
+
+                return classes , encoded_masks
+
+            elif cls == 0:
+                return [0] , [calc_background_mask()]
+
+            else:
+
+                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
+
+        else:
+            if cls == None:
+                
+                classes = self.get_classes()
+
+                devcoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+                return classes , devcoded_masks
+
+            else:
+                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls).encode_mask()]
 
 
     
@@ -204,8 +281,6 @@ class Annotation():
     
     
     
-        
-       
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -405,57 +480,9 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
 #   (class , mask)
 #       class = an array of classes
 #       mask = an array of masks 
+#
+#      ATTENTION
 #______________________________________________________________________________________________________________________________________________
-def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 , width = 1600):
-
-    classes = dic[0].copy()
-    labels = dic[1].copy()
-
-    def calc_background_mask(arg_labels = []):
-
-        if len(arg_labels) == 0:
-
-            arg_labels = np.array(
-                    list( map( lambda x: conv_label_to_mask(x , width = width , height = height)  , labels ) )
-                )
-
-        all_masks = np.sum(arg_labels , axis = 0).clip(0 , 255)
-        all_masks -= 255
-        all_masks *= -1
-
-        return all_masks
-
-    if considerBackground:
-        classes = list( map(lambda x: x+1 , classes))
-        classes.append(0)
-    
-        if cls == None:
-
-            labels = np.array(
-                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
-            )
-
-            np.insert( labels , 0 , calc_background_mask(labels) , axis = 0)
-
-            return classes , labels
-
-        elif cls == 0:
-            return [cls] , [calc_background_mask()]
-
-        else:
-            return [cls] , [_conv_label_to_mask(labels[cls - 1])]
-
-    else:
-        if cls == None:
-
-            labels = np.array(
-                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
-            )
-            return classes , labels
-
-        else:
-            return [cls] , [_conv_label_to_mask(labels[cls])]
-
 
 
 if __name__ == '__main__':
