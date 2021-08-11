@@ -339,16 +339,16 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
         lbl =  np.zeros((class_num,))
 
         if annotation.have_object():
-            classes = annotation.get_clases()
+            classes = annotation.get_classes()
             classes - 1 #in json file class started ferm numer 1
             lbl[classes] = 1
         
         if consider_no_object:
             #if no defect, no_defect class value should be 1 else 0
-            if np.sum(_class_) == 0:
-                _class_ = np.insert(_class_,0,1)
+            if np.sum(lbl) == 0:
+                lbl = np.insert(lbl,0,1)
             else:
-                _class_ = np.insert(_class_,0,0)
+                lbl = np.insert(lbl,0,0)
         
         lbls.append( lbl )
         imgs.append( annotation.get_img())
@@ -480,6 +480,6 @@ if __name__ == '__main__':
 
     annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
     annotations = read_annotations(annontions_names_train,lbls_path)
-    imgs,lbls = get_binary_datasets(annotations[:1000])
+    imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
     js = Annotation('Json_sample.json')
 
