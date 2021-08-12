@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 from numpy.core.fromnumeric import resize
 from numpy.lib.twodim_base import tri
-
+from numpy.random.mtrand import random_integers
+from scipy.interpolate import UnivariateSpline
 
 
 
@@ -190,24 +191,65 @@ class augmention():
                 
         return reses
 
+    
+
+    
+    def __spreadLookupTable__(self,x, y):
+        print(x)
+        print(y)
+        print('---------------------')
+        spline = UnivariateSpline(x, y)
+        return spline(range(256))
+        
+    
+
+    def color_fliter(self, imgs, max_shift=30):
+
+        reses = []
+        for img in imgs:
+            res = np.zeros_like(img)
+            if len(img.shape) == 2:
+                origin = np.linspace(0, 255 , 4)
+                destnation = origin + np.random.randint(0,max_shift, len(origin)) * np.random.choice([1,-1])
+                destnation = np.clip(destnation, 0,255)
+                destnation[0], destnation[-1] = 0,255
+                lookup_tabel = self.__spreadLookupTable__(origin, destnation)
+                res = cv2.LUT( img, lookup_tabel).astype(np.uint8)
+                
+            else:
+                for i in range(3):
+                    origin =  list(np.linspace(0, 255 , 4 ))
+                    destnation = list(origin + np.random.randint(0,max_shift, len(origin)) * np.random.choice([1,-1]))
+                    destnation[0], destnation[-1] = 0,255
+                    destnation = np.clip(destnation, 0,255)
+                    lookup_tabel = self.__spreadLookupTable__(origin, destnation)
+                    res[:,:,i] = cv2.LUT( img[:,:,i],lookup_tabel ).astype(np.uint8)
+
+            reses.append(res)
+        
+        return reses
+
+
+                    
+                
 
 
 
 
 aug  = augmention()
 
-#for i in range(20):
-#    print(i/10)
-img = cv2.imread('0a2c9f2e5.jpg')
-mask = cv2.imread('m0a2c9f2e5.jpg',0)
+for i in range(500):
+    print(i/10)
+    img = cv2.imread('0a2c9f2e5.jpg')
+    mask = cv2.imread('m0a2c9f2e5.jpg',0)
 
-#img , mask = aug.rotate_bound([mask,img], -10)
-#img , mask = aug.shift([mask,img], 1500, -100)
-#img , mask = aug.hflip([mask,img] )
-#img , mask = aug.shear([mask,img], -i/10   )
-#img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
-img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
-
-cv2.imshow('img',img)   
-cv2.imshow('org',mask)
-cv2.waitKey(0)
+    #img , mask = aug.rotate_bound([mask,img], -10)
+    #img , mask = aug.shift([mask,img], 1500, -100)
+    #img , mask = aug.hflip([mask,img] )
+    #img , mask = aug.shear([mask,img], -i/10   )
+    #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
+    #img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
+    img , mask = aug.color_fliter( [mask,img] )
+    cv2.imshow('img',img)   
+    cv2.imshow('org',mask)
+    cv2.waitKey(0)
