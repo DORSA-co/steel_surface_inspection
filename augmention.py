@@ -155,51 +155,39 @@ class augmention():
             reses.append( cv2.warpAffine(img, mtx, None) )
         return reses
 
-
     #______________________________________________________________________________________________________________________________________________
     #explain:
-    #   zoomin on center of images
+    #   zoomout or zoomin an y and x axis 
     #atribiut:
     #   imgs: iist of image
-    #   zoom_x: zoom in x axis ( recommend 1<shear<1.2)
-    #   zoom_y: zoom in y axis ( recommend 1<shear<1.2)
+    #   zoom_x: zoom in x axis ( recommend 0.7<shear<1.2)
+    #   zoom_y: zoom in y axis ( recommend 0.7<shear<1.2)
     #return:
     #   reses: list of zoomed images
     #______________________________________________________________________________________________________________________________________________
-    def zoomin( self, imgs, zoom_x=1, zoom_y=1):
+    def zoom(self, imgs, zoom_x, zoom_y):
         reses = []
         for img in imgs:
-            h, w = img.shape[0:2]
-            #select roi for zoom in center
-            roi_h, roi_w = int(h/zoom_y) , int(w/zoom_x)
-            start_y, start_x = (h - roi_h)//2 , (w - roi_w)//2
-            roi = img[start_y: start_y + roi_h, start_x:start_x+roi_w]
-            res = cv2.resize( roi, (w,h))
-            reses.append(res)
-        return reses
-    
+            res = np.zeros_like(img )
+            img = cv2.resize(img, None, fx=zoom_x, fy=zoom_y)
 
+            h,w = img.shape[:2]
+            h_res, w_res = res.shape[:2]
+            sy , sx = abs(h-h_res)//2 , abs(w-w_res)//2
 
-    #______________________________________________________________________________________________________________________________________________
-    #explain:
-    #   zoomout a list of images
-    #atribiut:
-    #   imgs: iist of image
-    #   zoom_x: zoom in x axis ( recommend 1<shear<1.2)
-    #   zoom_y: zoom in y axis ( recommend 1<shear<1.2)
-    #return:
-    #   reses: list of zoomed images
-    #______________________________________________________________________________________________________________________________________________
-    def zoomout( self, imgs, zoom_x=1, zoom_y=1):
-        reses = []
-        for img in imgs:
-            h, w = img.shape[0:2]
-            res = np.zeros_like( img )
-            roi = cv2.resize( img,None , fx = zoom_x, fy = zoom_y)
-            roi_h, roi_w = roi.shape[0:2]
-            start_y, start_x = (h - roi_h)//2 , (w - roi_w)//2
-            res[start_y: start_y + roi_h, start_x:start_x+roi_w] = roi
+            if h>= h_res and w>=w_res:
+                res =  img[sy:sy+h_res, sx:sx+w_res ]
+            
+            elif h>= h_res and w < w_res:
+                res[:,sx:sx+w ] =  img[sy:sy+h_res, :]
+
+            elif h< h_res and w >= w_res:
+                res[sy:sy+h, : ] =  img[ :, sx:sx+w_res]
+            
+            elif h< h_res and w < w_res:
+                res[sy:sy+h, sx:sx+w] =  img[ :, :]    
             reses.append(res)
+                
         return reses
 
 
@@ -214,11 +202,11 @@ img = cv2.imread('0a2c9f2e5.jpg')
 mask = cv2.imread('m0a2c9f2e5.jpg',0)
 
 #img , mask = aug.rotate_bound([mask,img], -10)
-#img , mask = aug.shift([mask,img], 100, -100)
+#img , mask = aug.shift([mask,img], 1500, -100)
 #img , mask = aug.hflip([mask,img] )
 #img , mask = aug.shear([mask,img], -i/10   )
 #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
-img , mask = aug.zoomin( [mask,img], zoom_x=1.1, zoom_y=1.5 )
+img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
 
 cv2.imshow('img',img)   
 cv2.imshow('org',mask)
