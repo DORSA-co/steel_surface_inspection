@@ -290,21 +290,19 @@ def read_annotation(annonations_path, annonation_name):
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get anonation and return image and binary label
-#   0: no object
-#   1: has object
+#   return binary dataset extractor
+#
 #arg:
-#   annotations: a batch or full list of instance of annonation() class
 #
 #return:
-#   img, lbl
-#   img: an image
-#   lbl: binary lbl (0 or 1)
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, binary_lbl
 #______________________________________________________________________________________________________________________________________________
-def extact_binary( annotation ):
-    lbl = int(annotation.have_object()) 
-    img = annotation.get_img()
-    return np.array(img),np.array(lbl )
+def extact_binary():
+    def func(annotation):
+        lbl = int(annotation.have_object()) 
+        img = annotation.get_img()
+        return np.array(img),np.array(lbl )
+    return func
 
 
 
@@ -313,35 +311,33 @@ def extact_binary( annotation ):
 #   get an anonations( instance of Anonation() class ) and return its image and class label
 #
 #arg:
-#   annotation , class_num, consider_no_object
-#   annotation: an instance of anonation( instance of Anonation() class ) it obtaon from read_label() function
+#   class_num, consider_no_object
 #   class_num: number of class. no_object class shouldn't acount
 #   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
 #
 #return:
-#   img, lbl
-#   img: image
-#   lbl: classification label 
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, classificaiotn_label ( in one_hot_code format )
 #______________________________________________________________________________________________________________________________________________
-def extract_class(annotation, class_num, consider_no_object=False):
-    lbl =  np.zeros((class_num,))
+def extract_class( class_num, consider_no_object=False):
 
-    if annotation.have_object():
-        classes = annotation.get_classes()
-        classes - 1 #in json file class started ferm numer 1
-        lbl[classes] = 1
-    
-    if consider_no_object:
-        #if no defect, no_defect class value should be 1 else 0
-        if np.sum(lbl) == 0:
-            lbl = np.insert(lbl,0,1)
-        else:
-            lbl = np.insert(lbl,0,0)
-    
-    img = annotation.get_img()
+    def func(annotation):
+        lbl =  np.zeros((class_num,))
 
-
-    return np.array(img),np.array(lbl )
+        if annotation.have_object():
+            classes = annotation.get_classes()
+            classes - 1 #in json file class started ferm numer 1
+            lbl[classes] = 1
+        
+        if consider_no_object:
+            #if no defect, no_defect class value should be 1 else 0
+            if np.sum(lbl) == 0:
+                lbl = np.insert(lbl,0,1)
+            else:
+                lbl = np.insert(lbl,0,0)
+        
+        img = annotation.get_img()
+        return np.array(img),np.array(lbl )
+    return func
 
 
 
@@ -455,11 +451,8 @@ def generator(imgs_path, annonations_path, annonations_name=None, batch_size = 3
     
     
     batch_annonation_name = []
-    for name in annonations_name:
-
-        annonation = read_annotations()
-
-        annotations = read_annotations(annontions_names_train,lbls_path)
+    for name in annonations_name:    
+        annonation = read_annotation( annonations_path, name)
 
 
 
