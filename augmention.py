@@ -2,6 +2,7 @@ from typing import MutableSequence
 import cv2
 import numpy as np
 from numpy.core.fromnumeric import resize
+from numpy.lib.function_base import copy
 from numpy.lib.twodim_base import tri
 from numpy.random.mtrand import random_integers
 from scipy.interpolate import UnivariateSpline
@@ -229,6 +230,7 @@ class augmention():
     #explain:
     #   augment an image randomly
     #atribiut:
+    #   img: image
     #   shift_range:  acceptable range for tansform
     #   rotation_range: acceptable range for rotation
     #   zoom_range:  acceptable range for zoom
@@ -256,43 +258,176 @@ class augmention():
                 tx = np.random.randint(shift_range[0], shift_range[1])
                 ty = np.random.randint(shift_range[0], shift_range[1])
                 imgs = self.shift(imgs, tx, ty)
-                print('shift', tx,ty)
+                #print('shift', tx,ty)
                     
 
             if np.random.rand() < func_chance and zoom_range is not None:
                 zoom_x = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
                 zoom_y = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
                 imgs = self.zoom(imgs, zoom_x, zoom_y)
-                print('zoom', zoom_x, zoom_y)
+                #print('zoom', zoom_x, zoom_y)
 
             if np.random.rand() < func_chance and rotation_range is not None:
                 angle = np.random.random() * (rotation_range[1] - rotation_range[0]) + rotation_range[0]
-                #imgs = self.rotate(imgs, angle)
-                print('rotate', angle)
+                imgs = self.rotate(imgs, angle)
+                #print('rotate', angle)
 
             if np.random.rand() < func_chance and shift_range is not None:
                 value = np.random.random() * (shear_range[1] - shear_range[0]) + shear_range[0]
                 imgs = self.shear(imgs, value)
-                print('shear', value)
+                #print('shear', value)
 
             if np.random.rand() < func_chance and wflip:
                 imgs = self.wflip(imgs)
-                print('wfilp')
+                #print('wfilp')
 
             if np.random.rand() < func_chance and hflip:
                 imgs = self.hflip(imgs)
-                print('hfilp')
+                #print('hfilp')
 
             if np.random.rand() < func_chance and color_filter:
                 imgs = self.color_filter(imgs)
-                print('color effect')
+                #print('color effect')
 
-            print('------------------augment-------------------')
+            #print('------------------augment-------------------')
         return imgs[0]
 
-
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   augment an image and it's mask randomly
+    #atribiut:
+    #   img: image
+    #   mask: mask label
+    #   shift_range:  acceptable range for tansform
+    #   rotation_range: acceptable range for rotation
+    #   zoom_range:  acceptable range for zoom
+    #   shear_range:  acceptable range for shear
+    #   hflip:  if True, hflip may occure
+    #   wflip:  if True, wflip may occure
+    #   color_filter:  if True, color_filter may occure
+    #   chance : possible of augment
+    #return:
+    #   img, mask
+    #   img: result image
+    #   mask: result mask
+    #______________________________________________________________________________________________________________________________________________
+    def augment_single_byMask(self,img, mask, shift_range=(-100, 100),
+                    rotation_range=(-10,10),
+                    zoom_range=(0.9,1.1),
+                    shear_range=(-0.1,0.1),
+                    hflip=True, 
+                    wflip = True, 
+                    color_filter=True,
+                    chance=0.3  ):
+        
+        func_chance = 0.5
+        
+        if np.random.rand() < chance or True:
+            if np.random.rand() < func_chance and shift_range is not None:
+                tx = np.random.randint(shift_range[0], shift_range[1])
+                ty = np.random.randint(shift_range[0], shift_range[1])
+                [img, mask ]  = self.shift([img, mask ] , tx, ty)
+                #print('shift', tx,ty)
                     
-                
+
+            if np.random.rand() < func_chance and zoom_range is not None:
+                zoom_x = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                zoom_y = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                [img, mask ]  = self.zoom([img, mask ] , zoom_x, zoom_y)
+                #print('zoom', zoom_x, zoom_y)
+
+            if np.random.rand() < func_chance and rotation_range is not None:
+                angle = np.random.random() * (rotation_range[1] - rotation_range[0]) + rotation_range[0]
+                [img, mask ]  = self.rotate([img, mask ] , angle)
+                #print('rotate', angle)
+
+            if np.random.rand() < func_chance and shift_range is not None:
+                value = np.random.random() * (shear_range[1] - shear_range[0]) + shear_range[0]
+                [img, mask ]  = self.shear([img, mask ] , value)
+                #print('shear', value)
+
+            if np.random.rand() < func_chance and wflip:
+                [img, mask ]  = self.wflip([img, mask ] )
+                #print('wfilp')
+
+            if np.random.rand() < func_chance and hflip:
+                [img, mask ]  = self.hflip([img, mask ] )
+                #print('hfilp')
+
+            if np.random.rand() < func_chance and color_filter:
+                [img] = self.color_filter([img])
+                #print('color effect')
+            #print('------------------augment-------------------')
+            _,mask = cv2.threshold(mask,180, 255, cv2.THRESH_BINARY)
+        return img, mask
+
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   augment a list of images randomly
+    #atribiut:
+    #   img: image
+    #   shift_range:  acceptable range for tansform
+    #   rotation_range: acceptable range for rotation
+    #   zoom_range:  acceptable range for zoom
+    #   shear_range:  acceptable range for shear
+    #   hflip:  if True, hflip may occure
+    #   wflip:  if True, wflip may occure
+    #   color_filter:  if True, color_filter may occure
+    #   chance : possible of augment
+    #return:
+    #   reses: result images
+    #______________________________________________________________________________________________________________________________________________
+    def augment_batch(self,imgs, shift_range=(-100, 100),
+                    rotation_range=(-10,10),
+                    zoom_range=(0.9,1.1),
+                    shear_range=(-0.1,0.1),
+                    hflip=True, 
+                    wflip = True, 
+                    color_filter=True,
+                    chance=0.3  ):
+        
+        func_chance = 0.5
+        reses=copy(imgs)
+        if np.random.rand() < chance or True:
+            if np.random.rand() < func_chance and shift_range is not None:
+                tx = np.random.randint(shift_range[0], shift_range[1])
+                ty = np.random.randint(shift_range[0], shift_range[1])
+                reses = self.shift(reses, tx, ty)
+                #print('shift', tx,ty)
+                    
+
+            if np.random.rand() < func_chance and zoom_range is not None:
+                zoom_x = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                zoom_y = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                reses = self.zoom(reses, zoom_x, zoom_y)
+                #print('zoom', zoom_x, zoom_y)
+
+            if np.random.rand() < func_chance and rotation_range is not None:
+                angle = np.random.random() * (rotation_range[1] - rotation_range[0]) + rotation_range[0]
+                reses = self.rotate(reses, angle)
+                #print('rotate', angle)
+
+            if np.random.rand() < func_chance and shift_range is not None:
+                value = np.random.random() * (shear_range[1] - shear_range[0]) + shear_range[0]
+                reses = self.shear(reses, value)
+                #print('shear', value)
+
+            if np.random.rand() < func_chance and wflip:
+                reses = self.wflip(reses)
+                #print('wfilp')
+
+            if np.random.rand() < func_chance and hflip:
+                reses = self.hflip(reses)
+                #print('hfilp')
+
+            if np.random.rand() < func_chance and color_filter:
+                reses = self.color_filter(reses)
+                #print('color effect')
+
+            #print('------------------augment-------------------')
+        return reses
+    
 
 
 
@@ -311,7 +446,8 @@ for i in range(500):
     #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
     #img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
     #img , mask = aug.color_fliter( [mask,img] )
-    img = aug.augment_single(img)
+    img,mask = aug.augment_single_byMask(img, mask)
+    
     cv2.imshow('img',img)   
     cv2.imshow('org',mask)
     cv2.waitKey(0)
