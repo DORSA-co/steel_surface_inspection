@@ -273,90 +273,75 @@ def split_annonations_name(annonations_name_list, split=0.2, shuffle=True):
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get path of labels and a list of labels and return list of labels in annotation() class format
+#   get path of labels and a annonation_name and return annotation() class format
 #
 #arg:
-#   lbls_list: list of labels name
-#   lbls_path: path of folder of labels 
+#   annonations_path: path of folder of annonations 
+#   annonation_name: name of specific annonation
 #
 #return:
 #   labels
 #   labels : a annoation of label in annotation() class format
 #
 #______________________________________________________________________________________________________________________________________________
-def read_annotations(lbls_list, lbls_path):
-    labels = []
-    for lbl_name in lbls_list:
-        labels.append( Annotation( os.path.join( lbls_path, lbl_name ))  )
-    return labels
+def read_annotation(annonations_path, annonation_name):
+    return  Annotation( os.path.join( annonations_path, annonation_name ) )
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get anonations list and return images and binary labels
+#   get anonation and return image and binary label
 #   0: no object
 #   1: has object
 #arg:
 #   annotations: a batch or full list of instance of annonation() class
 #
 #return:
-#   imgs, lbls
-#   imgs: batch of images
-#   lbls: batch of binary labels
+#   img, lbl
+#   img: an image
+#   lbl: binary lbl (0 or 1)
 #______________________________________________________________________________________________________________________________________________
-def get_binary_datasets( annotations ):
-    
-    lbls = []
-    imgs = []
-    for annotation in annotations:
-        lbls.append( int(annotation.have_object()) )
-        imgs.append( annotation.get_img())
-
-    return np.array(imgs),np.array(lbls )
+def extact_binary( annotation ):
+    lbl = int(annotation.have_object()) 
+    img = annotation.get_img()
+    return np.array(img),np.array(lbl )
 
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get a list of anonations( instance of Anonation() class ) and return images and class labels
+#   get an anonations( instance of Anonation() class ) and return its image and class label
 #
 #arg:
-#   annotations , class_num, consider_no_object
-#   annotations: a batch or full list of instance of anonations( instance of Anonation() class ) it obtaon from read_label() function
+#   annotation , class_num, consider_no_object
+#   annotation: an instance of anonation( instance of Anonation() class ) it obtaon from read_label() function
 #   class_num: number of class. no_object class shouldn't acount
 #   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
 #
 #return:
-#   class_lbl, imgs_list
-#   class_lbl: classification label for images_name_list
-#   imgs_list: it is excatly imgs_list aurguman
+#   img, lbl
+#   img: image
+#   lbl: classification label 
 #______________________________________________________________________________________________________________________________________________
-def get_class_datasets(annotations, class_num, consider_no_object=False):
+def extract_class(annotation, class_num, consider_no_object=False):
+    lbl =  np.zeros((class_num,))
 
-    lbls = []
-    imgs = []
-    for annotation in annotations:
-        lbl =  np.zeros((class_num,))
-
-        if annotation.have_object():
-            classes = annotation.get_classes()
-            classes - 1 #in json file class started ferm numer 1
-            lbl[classes] = 1
-        
-        if consider_no_object:
-            #if no defect, no_defect class value should be 1 else 0
-            if np.sum(lbl) == 0:
-                lbl = np.insert(lbl,0,1)
-            else:
-                lbl = np.insert(lbl,0,0)
-        
-        lbls.append( lbl )
-        imgs.append( annotation.get_img())
+    if annotation.have_object():
+        classes = annotation.get_classes()
+        classes - 1 #in json file class started ferm numer 1
+        lbl[classes] = 1
+    
+    if consider_no_object:
+        #if no defect, no_defect class value should be 1 else 0
+        if np.sum(lbl) == 0:
+            lbl = np.insert(lbl,0,1)
+        else:
+            lbl = np.insert(lbl,0,0)
+    
+    img = annotation.get_img()
 
 
-    return np.array(imgs),np.array(lbls )
-
-
+    return np.array(img),np.array(lbl )
 
 
 
@@ -456,6 +441,30 @@ def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 ,
 
         else:
             return [cls] , [_conv_label_to_mask(labels[cls])]
+
+
+
+
+
+def generator(imgs_path, annonations_path, annonations_name=None, batch_size = 32, aug = None):
+    
+    inputs = []
+    lbls = []
+    if annonations_name is None:
+        annonations_name = os.listdir(annonations_path)
+    
+    
+    batch_annonation_name = []
+    for name in annonations_name:
+
+        annonation = read_annotations()
+
+        annotations = read_annotations(annontions_names_train,lbls_path)
+
+
+
+
+
 
 
 
