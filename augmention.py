@@ -27,19 +27,7 @@ class augmention():
         for img in imgs:
             center = img.shape[0]//2,  img.shape[1] //2
             mtx = cv2.getRotationMatrix2D( center, rotate_agnle, 1 )
-
-            h,w = img.shape[:2]
-            cos = np.abs(mtx[0, 0])
-            sin = np.abs(mtx[0, 1])
-            # compute the new bounding dimensions of the image
-            nW = int((h * sin) + (w * cos))
-            nH = int((h * cos) + (w * sin))
-            # adjust the rotation matrix to take into account translation
-            mtx[0, 2] += (nW / 2) - center[0]
-            mtx[1, 2] += (nH / 2) - center[1]
-            # perform the actual rotatio
-
-            reses.append(cv2.warpAffine(img, mtx, (nW,nH)))
+            reses.append(cv2.warpAffine(img, mtx, None))
         return reses
     
     #______________________________________________________________________________________________________________________________________________
@@ -141,7 +129,7 @@ class augmention():
     #   hshear list of images 
     #atribiut:
     #   imgs: iist of image
-    #   value: value of shearning ( recommend -2<shear<2)
+    #   value: value of shearning ( recommend -0.2<shear<0.2)
     #return:
     #   reses: list of sheared images
     #______________________________________________________________________________________________________________________________________________
@@ -202,7 +190,7 @@ class augmention():
         return spline(range(256))
         
     
-     #______________________________________________________________________________________________________________________________________________
+    #______________________________________________________________________________________________________________________________________________
     #explain:
     #   Apply a random color filter( color effect ) on a list of images
     #atribiut:
@@ -211,7 +199,7 @@ class augmention():
     #return:
     #   reses: result images
     #______________________________________________________________________________________________________________________________________________
-    def color_fliter(self, imgs, max_shift=30):
+    def color_filter(self, imgs, max_shift=30):
 
         reses = []
         for img in imgs:
@@ -234,8 +222,73 @@ class augmention():
                     res[:,:,i] = cv2.LUT( img[:,:,i],lookup_tabel ).astype(np.uint8)
 
             reses.append(res)
-        
         return reses
+
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   augment an image randomly
+    #atribiut:
+    #   shift_range:  acceptable range for tansform
+    #   rotation_range: acceptable range for rotation
+    #   zoom_range:  acceptable range for zoom
+    #   shear_range:  acceptable range for shear
+    #   hflip:  if True, hflip may occure
+    #   wflip:  if True, wflip may occure
+    #   color_filter:  if True, color_filter may occure
+    #   chance : possible of augment
+    #return:
+    #   reses: result images
+    #______________________________________________________________________________________________________________________________________________
+    def augment_single(self,img, shift_range=(-100, 100),
+                    rotation_range=(-10,10),
+                    zoom_range=(0.9,1.1),
+                    shear_range=(-0.1,0.1),
+                    hflip=True, 
+                    wflip = True, 
+                    color_filter=True,
+                    chance=0.3  ):
+        
+        func_chance = 0.5
+        imgs = [img ] 
+        if np.random.rand() < chance or True:
+            if np.random.rand() < func_chance and shift_range is not None:
+                tx = np.random.randint(shift_range[0], shift_range[1])
+                ty = np.random.randint(shift_range[0], shift_range[1])
+                imgs = self.shift(imgs, tx, ty)
+                print('shift', tx,ty)
+                    
+
+            if np.random.rand() < func_chance and zoom_range is not None:
+                zoom_x = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                zoom_y = np.random.random() * (zoom_range[1] - zoom_range[0]) + zoom_range[0]
+                imgs = self.zoom(imgs, zoom_x, zoom_y)
+                print('zoom', zoom_x, zoom_y)
+
+            if np.random.rand() < func_chance and rotation_range is not None:
+                angle = np.random.random() * (rotation_range[1] - rotation_range[0]) + rotation_range[0]
+                #imgs = self.rotate(imgs, angle)
+                print('rotate', angle)
+
+            if np.random.rand() < func_chance and shift_range is not None:
+                value = np.random.random() * (shear_range[1] - shear_range[0]) + shear_range[0]
+                imgs = self.shear(imgs, value)
+                print('shear', value)
+
+            if np.random.rand() < func_chance and wflip:
+                imgs = self.wflip(imgs)
+                print('wfilp')
+
+            if np.random.rand() < func_chance and hflip:
+                imgs = self.hflip(imgs)
+                print('hfilp')
+
+            if np.random.rand() < func_chance and color_filter:
+                imgs = self.color_filter(imgs)
+                print('color effect')
+
+            print('------------------augment-------------------')
+        return imgs[0]
 
 
                     
@@ -251,13 +304,14 @@ for i in range(500):
     img = cv2.imread('0a2c9f2e5.jpg')
     mask = cv2.imread('m0a2c9f2e5.jpg',0)
 
-    #img , mask = aug.rotate_bound([mask,img], -10)
+    #img , mask = aug.rotate([mask,img], -10)
     #img , mask = aug.shift([mask,img], 1500, -100)
     #img , mask = aug.hflip([mask,img] )
     #img , mask = aug.shear([mask,img], -i/10   )
     #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
     #img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
-    img , mask = aug.color_fliter( [mask,img] )
+    #img , mask = aug.color_fliter( [mask,img] )
+    img = aug.augment_single(img)
     cv2.imshow('img',img)   
     cv2.imshow('org',mask)
     cv2.waitKey(0)
