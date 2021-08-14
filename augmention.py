@@ -202,7 +202,15 @@ class augmention():
         return spline(range(256))
         
     
-
+     #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   Apply a random color filter( color effect ) on a list of images
+    #atribiut:
+    #   imgs: iist of image
+    #   max_shift: maximum value for shift color
+    #return:
+    #   reses: result images
+    #______________________________________________________________________________________________________________________________________________
     def color_fliter(self, imgs, max_shift=30):
 
         reses = []
