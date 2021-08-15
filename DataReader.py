@@ -22,10 +22,10 @@ MASK_TYPE = 3
 #   codedMaskes_: array of masks in format of [[start px, end px],...]
 #______________________________________________________________________________________________________________________________________________
 class Mask():
-    def __init__(self):
-        self.class_ = None
-        self.codedMask_ = None
-        self.refrenced_size_ = None
+    def __init__(self, codedMask_, class_, refrenced_size_ ):
+        self.class_id = None
+        self.codedMask = None
+        self.refrenced_size = None
 
     #______________________________________________________________________________________________________________________________________________
     #explain:
@@ -41,10 +41,10 @@ class Mask():
     #______________________________________________________________________________________________________________________________________________
     def encode_mask(self):
         
-        ref_width = self.refrenced_size_[1]
-        ref_height = self.refrenced_size_[0]
+        ref_width = self.refrenced_size[1]
+        ref_height = self.refrenced_size[0]
 
-        coded_mask_mod = self.codedMask_.copy()
+        coded_mask_mod = self.codedMask.copy()
         coded_mask_mod[:,1] += coded_mask_mod[:,0]
 
         mask = np.zeros((ref_height * ref_width))
@@ -189,6 +189,7 @@ class Annotation():
         for lbl in labels:
             classes.append( int(lbl['class']) )
         return np.array(classes)
+
     
     def get_encoded_mask(self, cls = None):
         assert self.have_object(), "There is no object"
@@ -201,17 +202,13 @@ class Annotation():
         mask_list = []
 
         for lbl in labels:
-            
-            msk_obj = Mask()
-            msk_obj.refrenced_size_ = self.get_img_size()
-            msk_obj.class_ = int(lbl['class'])
-            msk_obj.codedMask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
-
-            if (cls == msk_obj.class_):
+            coded_msk = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            class_id = int(lbl['class'])
+            size = self.get_img_size()
+            msk_obj = Mask(coded_msk, class_id, size)
+            if (cls == msk_obj.class_id):
                 return [msk_obj]
-            
             mask_list.append(msk_obj)
-
         return mask_list
 
 
@@ -229,9 +226,7 @@ class Annotation():
                 )
 
             all_masks = np.sum(raw_masks_decoded , axis = 0).clip(0 , 255)
-            all_masks -= 255
-            all_masks *= -1
-
+            all_masks = 255 - all_masks
             return all_masks
 
         if considerBackground:
@@ -239,7 +234,7 @@ class Annotation():
 
             if cls == None:
                 classes = list(
-                    map(lambda x: x.class_ + 1 , raw_masks)
+                    map(lambda x: x.class_id + 1 , raw_masks)
                 )
 
                 encoded_masks = np.array(
@@ -549,4 +544,7 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
     js = Annotation(os.path.join(lbls_path , '0025bde0c.json' ))
+    print('ssss')
+    a = js.get_encoded_mask(0)
     img = js.get_decoded_masks(cls=0 , considerBackground=True)[1][0]
+    pass
