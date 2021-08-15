@@ -109,6 +109,29 @@ class Mask():
 #       explain:
 #           return list of objects label contain masks and classes in format of Label() class
 #   -------------------------------
+#   get_encoded_mask:
+#       explain:
+#           returns the encoded masks of an anotation. If cls = None (or not passed any), the function will return ALL the masks
+#           for the annotation. If passed an integer, if available, the method will return the mask with the passed integer class. 
+#           If the integer is not valid, an assertation will rise.
+#   -------------------------------
+#   get_decoded_masks:
+#       explain:
+#           Uses the encoded masks available in the annotation and decoedes the requested masks.
+#           If nothing is passed for cls, all encoded masks are decoded and returned as an array of masks.
+#           If considerBackground is set to True, all classes will increment by one and the background mask is calculated if necessary.
+#
+#           cls = class number. If ConsiderBackground == True, the main classes start from 1 and the 0 class is the background maske.
+#                   if not, the classes will start at 0.
+#           considerBackground = If true, the 0 class is considered as the background mask class and if necessary, background mask
+#                   is calculated.
+#
+#           return:
+#               (class , mask)
+#               class = an array of classes
+#               mask = an array of masks 
+#           
+#   -------------------------------
 #   get_bboxs:
 #       TBD
 #   -------------------------------
@@ -128,6 +151,10 @@ class Mask():
 #       explain:
 #           return True, type of localisation's label is bounding box format
 #   -------------------------------
+#   is_class_valid:
+#       explain:
+#           returns true if the mask class is available in the anotation. False if not.
+#   --------------------------------
 #______________________________________________________________________________________________________________________________________________
 class Annotation():
 
@@ -444,60 +471,6 @@ def extract_class( class_num, consider_no_object=False):
         img = annotation.get_img()
         return np.array(img),np.array(lbl )
     return func
-        
-#______________________________________________________________________________________________________________________________________________
-#explain:
-#   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
-#
-#arg:
-#   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
-#   width = image width
-#   height = image height
-#
-#return:
-#   image_mask = a mask that shows the location of the certain defects
-#______________________________________________________________________________________________________________________________________________
-def _encoded_mask(coded_mask , height = 256 , width = 1600):
-    # Lbl is an np.array
-    lbl_mod = mask_raw.copy()
-    lbl_mod[:,1] += lbl_mod[:,0]
-  
-    mask = np.zeros((height * width))
-
-    def assign_val(coded_):
-        pass
-    for lbl in lbl_mod:
-        mask[lbl[0]:lbl[1]] = 255
-
-    return mask.reshape((width,height)).T
-#______________________________________________________________________________________________________________________________________________
-#explain:
-#   takes one element of csv2labelDict output (the value of an element in the dictionary) and convert the desiered lable to image mask.
-#   If nothing is passed for cls, all labels are converted to masks and returned as an array of masks.
-#   If considerBackground is set to True, all classes will increment by one an the background mask is calculated if necessary.
-#
-#
-#arg:
-#   dict_lbl = a tuple ([classes] , [ [label]s , ... ])
-#   cls = class number. If ConsiderBackground == True, the main classes start from 1 and the 0 class is the background maske.
-#       if not, the classes will start at 0.
-#   considerBackground = If true, the 0 class is considered as the background mask class and if necessary, background mask
-#       is calculated.
-#   width = image width
-#   height = image height
-#
-#return:
-#   (class , mask)
-#       class = an array of classes
-#       mask = an array of masks 
-#
-#      ATTENTION
-#______________________________________________________________________________________________________________________________________________
-
-
-
-
-
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -561,12 +534,12 @@ if __name__ == '__main__':
     lbls_path = 'severstal-steel-defect-detection/annotations'
     imgs_path = 'severstal-steel-defect-detection/train_images'
 
-    extractor_func1 = extact_binary()
-    extractor_func2 = extract_class(class_num=4, consider_no_object=False)
+    # extractor_func1 = extact_binary()
+    # extractor_func2 = extract_class(class_num=4, consider_no_object=False)
     
-    gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None)
-    x1,y1 = next(gen)
-    x2,y2 = next(gen)
+    # gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None)
+    # x1,y1 = next(gen)
+    # x2,y2 = next(gen)
     # filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
     # filtered = filter_annonations(annonations_name, path, filter_arg)
     # annontions_names = get_annonations_name(lbls_path)
@@ -575,5 +548,5 @@ if __name__ == '__main__':
     # annotations = read_annotations(annontions_names_train,lbls_path)
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
-    js = Annotation(os.path.join(path , '470a96423.json' ))
-    print(js.get_decoded_masks(cls= 3 , considerBackground=True))
+    js = Annotation(os.path.join(lbls_path , '0025bde0c.json' ))
+    img = js.get_decoded_masks(cls=0 , considerBackground=True)[1][0]
