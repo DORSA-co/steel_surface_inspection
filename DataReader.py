@@ -1,4 +1,3 @@
-import csv
 import os
 from typing_extensions import Annotated
 import numpy as np
@@ -7,11 +6,9 @@ from numpy.core.fromnumeric import reshape
 from numpy.lib.shape_base import split
 import random
 from sys import getsizeof
-
 import json
 
-lbls_path = 'severstal-steel-defect-detection/annotations'
-imgs_path = 'severstal-steel-defect-detection/train_images'
+
 
 CLASSIFICATION_TYPE = 1
 BINARY_TYPE = 2
@@ -500,17 +497,56 @@ def _encoded_mask(coded_mask , height = 256 , width = 1600):
 
 
 
-def generator(imgs_path, annonations_path, extractor_func, annonations_name=None, batch_size = 32, aug = None):
+
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   genreat inputs and labels batch
+#
+#
+#arg:
+#   annonations_path: path of annonations file
+#   extractor_func: an exrtracor function that get an annonation and returns its image and label
+#   annonations_name: list of file name of desire  annonations. if None , it load all the annonations in path
+#   rescale: rescale value that images and masks divided on it (defualt = 255)
+#   batch_size: size of batchs
+#   aug: augmention object( instance of Augmention() class from augmention.py file. if None there is no augmention
+#   infinit: if False, it returns batchs just for one epoch
+#
+#return:
+#   (batch_inputs , batch_lbls)
+#   batch_inputs: batch of images that are ready for train
+#   batch_lbls: batch of labels that are ready for train
+#
+#______________________________________________________________________________________________________________________________________________
+def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, infinit=True):
     
     batch_inputs = []
     batch_lbls = []
     if annonations_name is None:
         annonations_name = os.listdir(annonations_path)
     
-    
-    batch_annonation_name = []
-    for name in annonations_name:    
-        annonation = read_annotation( annonations_path, name)
+    while infinit:
+        for name in annonations_name:    
+            annonation = read_annotation( annonations_path, name)
+            img, lbl = extractor_func(annonation)
+            if aug is not None:
+                if len(lbl.shape) < 2: #binary or classification
+                    img = aug.augment_single(img)
+                    img = img.astpye(np.float32) / rescale
+
+                else: #Mask
+                    img, lbl = aug.augment_single_byMask(img, lbl)
+                    img = img.astpye(np.float32) / rescale
+                    lbl = lbl.astpye(np.float32) / rescale
+            
+            batch_lbls.append( lbl )
+            batch_inputs.append( img )
+
+            if len(  batch_inputs) == batch_size:
+                yield np.array(batch_inputs), np.array(batch_lbls)
+                batch_inputs, batch_lbls = [] , []
+
 
 
 
@@ -521,19 +557,16 @@ def generator(imgs_path, annonations_path, extractor_func, annonations_name=None
 
 
 if __name__ == '__main__':
-    '''
-    csv_list = csv_reader(csv_path)
-    dict_lbl = csv2labelDict(csv_list)
-    imgs_list,b =  get_imgs_list(img_path)
+    
+    lbls_path = 'severstal-steel-defect-detection/annotations'
+    imgs_path = 'severstal-steel-defect-detection/train_images'
 
-    bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
-    classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
-    '''
+    extractor_func1 = extact_binary()
+    extractor_func2 = extract_class(class_num=4, consider_no_object=False)
     
-        
-    annonations_name = ['Json_sample.json']
-    path = 'severstal-steel-defect-detection\\annotations'
-    
+    gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None)
+    x1,y1 = next(gen)
+    x2,y2 = next(gen)
     # filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
     # filtered = filter_annonations(annonations_name, path, filter_arg)
     # annontions_names = get_annonations_name(lbls_path)
