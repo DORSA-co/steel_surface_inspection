@@ -13,6 +13,9 @@ import json
 lbls_path = 'severstal-steel-defect-detection/annotations'
 imgs_path = 'severstal-steel-defect-detection/train_images'
 
+CLASSIFICATION_TYPE = 1
+BINARY_TYPE = 2
+MASK_TYPE = 3
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -497,10 +500,10 @@ def _encoded_mask(coded_mask , height = 256 , width = 1600):
 
 
 
-def generator(imgs_path, annonations_path, annonations_name=None, batch_size = 32, aug = None):
+def generator(imgs_path, annonations_path, extractor_func, annonations_name=None, batch_size = 32, aug = None):
     
-    inputs = []
-    lbls = []
+    batch_inputs = []
+    batch_lbls = []
     if annonations_name is None:
         annonations_name = os.listdir(annonations_path)
     
@@ -508,6 +511,7 @@ def generator(imgs_path, annonations_path, annonations_name=None, batch_size = 3
     batch_annonation_name = []
     for name in annonations_name:    
         annonation = read_annotation( annonations_path, name)
+
 
 
 
