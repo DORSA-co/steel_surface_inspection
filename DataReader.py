@@ -60,12 +60,12 @@ class Mask():
 
     
     def get_mask(self):
-        return self.__mask__
+        return self.mask
     
 
 
     def get_class_id(self):
-        return self.__class_id__
+        return self.class_id
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -119,7 +119,7 @@ class Mask():
 #   -------------------------------
 #   get_masks:
 #       explain:
-#           return list of objects label contain masks and classes in format of Label() class
+#           return list of mask objects in format of Mask() class
 #   -------------------------------
 #   get_encoded_mask:
 #       explain:
@@ -396,7 +396,20 @@ def extract_class( class_num, consider_no_object=False):
 
 
 
-
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get an anonations( instance of Anonation() class ) and return its image and mask label
+#
+#arg:
+#   class_num, mask_size, consider_no_object, class_id
+#   class_num: number of class. no_object class shouldn't acount
+#   mask_size: size of results mask in format of (h,w)
+#   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
+#   class_id: if be None, it return all masks else it just return that specific class mask
+#
+#return:
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, mask_label ( in shape of (h,w,num_class) )
+#______________________________________________________________________________________________________________________________________________
 def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None):
     def func(annotation):
         lbl = np.zeros(  mask_size + (class_num,) , dtype=np.uint8)
@@ -464,8 +477,6 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
             annonation = read_annotation( annonations_path, name)
             img, lbl = extractor_func(annonation)
             if aug is not None:
-                print(lbl.shape)
-                print('dddddddddddddddddddddd')
                 if len(lbl.shape) < 2: #binary or classification
                     img = aug.augment_single(img)
                     
