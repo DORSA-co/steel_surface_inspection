@@ -1,4 +1,3 @@
-import csv
 import os
 from typing_extensions import Annotated
 import numpy as np
@@ -7,12 +6,13 @@ from numpy.core.fromnumeric import reshape
 from numpy.lib.shape_base import split
 import random
 from sys import getsizeof
-
 import json
 
-lbls_path = 'severstal-steel-defect-detection/annotations'
-imgs_path = 'severstal-steel-defect-detection/train_images'
 
+
+CLASSIFICATION_TYPE = 1
+BINARY_TYPE = 2
+MASK_TYPE = 3
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -22,9 +22,37 @@ imgs_path = 'severstal-steel-defect-detection/train_images'
 #   codedMaskes_: array of masks in format of [[start px, end px],...]
 #______________________________________________________________________________________________________________________________________________
 class Mask():
-    def __init__(self):
-        self.class_ = None
-        self.codedMask_ = None
+    def __init__(self, codedMask_, class_, refrenced_size_ ):
+        self.class_id = None
+        self.codedMask = None
+        self.refrenced_size = None
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
+    #
+    #arg:
+    #   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
+    #   width = image width
+    #   height = image height
+    #
+    #return:
+    #   image_mask = a mask that shows the location of the certain defects
+    #______________________________________________________________________________________________________________________________________________
+    def encode_mask(self):
+        
+        ref_width = self.refrenced_size[1]
+        ref_height = self.refrenced_size[0]
+
+        coded_mask_mod = self.codedMask.copy()
+        coded_mask_mod[:,1] += coded_mask_mod[:,0]
+
+        mask = np.zeros((ref_height * ref_width))
+
+        for raw_mask in coded_mask_mod:
+            mask[raw_mask[0]:raw_mask[1]] = 255
+
+        return mask.reshape( (ref_width, ref_height) ).T
         
 
 
@@ -81,6 +109,29 @@ class Mask():
 #       explain:
 #           return list of objects label contain masks and classes in format of Label() class
 #   -------------------------------
+#   get_encoded_mask:
+#       explain:
+#           returns the encoded masks of an anotation. If cls = None (or not passed any), the function will return ALL the masks
+#           for the annotation. If passed an integer, if available, the method will return the mask with the passed integer class. 
+#           If the integer is not valid, an assertation will rise.
+#   -------------------------------
+#   get_decoded_masks:
+#       explain:
+#           Uses the encoded masks available in the annotation and decoedes the requested masks.
+#           If nothing is passed for cls, all encoded masks are decoded and returned as an array of masks.
+#           If considerBackground is set to True, all classes will increment by one and the background mask is calculated if necessary.
+#
+#           cls = class number. If ConsiderBackground == True, the main classes start from 1 and the 0 class is the background maske.
+#                   if not, the classes will start at 0.
+#           considerBackground = If true, the 0 class is considered as the background mask class and if necessary, background mask
+#                   is calculated.
+#
+#           return:
+#               (class , mask)
+#               class = an array of classes
+#               mask = an array of masks 
+#           
+#   -------------------------------
 #   get_bboxs:
 #       TBD
 #   -------------------------------
@@ -100,6 +151,10 @@ class Mask():
 #       explain:
 #           return True, type of localisation's label is bounding box format
 #   -------------------------------
+#   is_class_valid:
+#       explain:
+#           returns true if the mask class is available in the anotation. False if not.
+#   --------------------------------
 #______________________________________________________________________________________________________________________________________________
 class Annotation():
 
@@ -132,22 +187,89 @@ class Annotation():
         classes = []
         labels = self.annotation['labels']
         for lbl in labels:
-            classes.append( lbl['class'])
+            classes.append( int(lbl['class']) )
         return np.array(classes)
+
     
-    def get_masks(self):
+    def get_encoded_mask(self, cls = None):
         assert self.have_object(), "There is no object"
         assert self.is_lbl_mask(), "Label type is not mask"
+
+        if cls != None:
+            assert self.is_class_valid(cls) , "Class Not Valid" 
+
         labels = self.annotation['labels']
         mask_list = []
+
         for lbl in labels:
-            print(lbl.keys())
-            msk_obj = Mask()
-            msk_obj.class_ = int(lbl['class'])
-            msk_obj.mask_ = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            coded_msk = np.array( lbl['mask'] ).reshape((-1,2)).astype(np.int32)
+            class_id = int(lbl['class'])
+            size = self.get_img_size()
+            msk_obj = Mask(coded_msk, class_id, size)
+            if (cls == msk_obj.class_id):
+                return [msk_obj]
             mask_list.append(msk_obj)
         return mask_list
 
+
+
+    def get_decoded_masks(self,  cls = None , considerBackground = False , **kwargs ):
+
+        height , width = self.get_img_size()
+
+        raw_masks = self.get_encoded_mask()
+
+        def calc_background_mask():
+
+            raw_masks_decoded = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+
+            all_masks = np.sum(raw_masks_decoded , axis = 0).clip(0 , 255)
+            all_masks = 255 - all_masks
+            return all_masks
+
+        if considerBackground:
+            # Add all classes by one
+
+            if cls == None:
+                classes = list(
+                    map(lambda x: x.class_id + 1 , raw_masks)
+                )
+
+                encoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask() , raw_masks ) )
+                )
+
+                classes.append(0)
+
+                np.append( encoded_masks , 0 , calc_background_mask() , axis = 0)
+
+                return classes , encoded_masks
+
+            elif cls == 0:
+                return [0] , [calc_background_mask()]
+
+            else:
+
+                assert self.is_class_valid(cls - 1), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls - 1)[0].encode_mask()]
+
+        else:
+            if cls == None:
+                
+                classes = self.get_classes()
+
+                devcoded_masks = np.array(
+                    list( map( lambda x: x.encode_mask()  , raw_masks ) )
+                )
+                return classes , devcoded_masks
+
+            else:
+                assert self.is_class_valid(cls), "Requested mask-class is not valid!"
+
+                return [cls] , [self.get_encoded_mask(cls = cls)[0].encode_mask()]
 
 
 
@@ -156,6 +278,14 @@ class Annotation():
         assert self.have_object(), "There is no object"
         assert self.is_lbl_bbox(), "Label type is not bounding box"
 
+    def is_class_valid(self , cls ):
+        classes = self.get_classes()
+        
+        if cls in classes:
+            return True
+
+        else:
+            return False
 
     def is_color(self):
         return self.annotation['color_mode'] == 'COLOR'
@@ -176,8 +306,6 @@ class Annotation():
     
     
     
-        
-       
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -273,69 +401,54 @@ def split_annonations_name(annonations_name_list, split=0.2, shuffle=True):
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get path of labels and a list of labels and return list of labels in annotation() class format
+#   get path of labels and a annonation_name and return annotation() class format
 #
 #arg:
-#   lbls_list: list of labels name
-#   lbls_path: path of folder of labels 
+#   annonations_path: path of folder of annonations 
+#   annonation_name: name of specific annonation
 #
 #return:
 #   labels
 #   labels : a annoation of label in annotation() class format
 #
 #______________________________________________________________________________________________________________________________________________
-def read_annotations(lbls_list, lbls_path):
-    labels = []
-    for lbl_name in lbls_list:
-        labels.append( Annotation( os.path.join( lbls_path, lbl_name ))  )
-    return labels
+def read_annotation(annonations_path, annonation_name):
+    return  Annotation( os.path.join( annonations_path, annonation_name ) )
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get anonations list and return images and binary labels
-#   0: no object
-#   1: has object
+#   return binary dataset extractor
+#
 #arg:
-#   annotations: a batch or full list of instance of annonation() class
 #
 #return:
-#   imgs, lbls
-#   imgs: batch of images
-#   lbls: batch of binary labels
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, binary_lbl
 #______________________________________________________________________________________________________________________________________________
-def get_binary_datasets( annotations ):
-    
-    lbls = []
-    imgs = []
-    for annotation in annotations:
-        lbls.append( int(annotation.have_object()) )
-        imgs.append( annotation.get_img())
-
-    return np.array(imgs),np.array(lbls )
+def extact_binary():
+    def func(annotation):
+        lbl = int(annotation.have_object()) 
+        img = annotation.get_img()
+        return np.array(img),np.array(lbl )
+    return func
 
 
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   get a list of anonations( instance of Anonation() class ) and return images and class labels
+#   get an anonations( instance of Anonation() class ) and return its image and class label
 #
 #arg:
-#   annotations , class_num, consider_no_object
-#   annotations: a batch or full list of instance of anonations( instance of Anonation() class ) it obtaon from read_label() function
+#   class_num, consider_no_object
 #   class_num: number of class. no_object class shouldn't acount
 #   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
 #
 #return:
-#   class_lbl, imgs_list
-#   class_lbl: classification label for images_name_list
-#   imgs_list: it is excatly imgs_list aurguman
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, classificaiotn_label ( in one_hot_code format )
 #______________________________________________________________________________________________________________________________________________
-def get_class_datasets(annotations, class_num, consider_no_object=False):
+def extract_class( class_num, consider_no_object=False):
 
-    lbls = []
-    imgs = []
-    for annotation in annotations:
+    def func(annotation):
         lbl =  np.zeros((class_num,))
 
         if annotation.have_object():
@@ -350,136 +463,88 @@ def get_class_datasets(annotations, class_num, consider_no_object=False):
             else:
                 lbl = np.insert(lbl,0,0)
         
-        lbls.append( lbl )
-        imgs.append( annotation.get_img())
-
-
-    return np.array(imgs),np.array(lbls )
-
-
-
-
+        img = annotation.get_img()
+        return np.array(img),np.array(lbl )
+    return func
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
-#   takes a label from train.csv file and converts it to image mask. This function can be used for different width and height
-#
-#arg:
-#   lbl = a label with the same style as labels in csv2labelDict. An np.array which shows the [n * [start_pix, column_spacing]].
-#   width = image width
-#   height = image height
-#
-#return:
-#   image_mask = a mask that shows the location of the certain defects
-#______________________________________________________________________________________________________________________________________________
-def _encoded_mask(coded_mask , height = 256 , width = 1600):
-    # Lbl is an np.array
-    lbl_mod = mask_raw.copy()
-    lbl_mod[:,1] += lbl_mod[:,0]
-  
-    mask = np.zeros((height * width))
-
-    def assign_val(coded_):
-        pass
-    for lbl in lbl_mod:
-        mask[lbl[0]:lbl[1]] = 255
-
-    return mask.reshape((width,height)).T
-
-#______________________________________________________________________________________________________________________________________________
-#explain:
-#   takes one element of csv2labelDict output (the value of an element in the dictionary) and convert the desiered lable to image mask.
-#   If nothing is passed for cls, all labels are converted to masks and returned as an array of masks.
-#   If considerBackground is set to True, all classes will increment by one an the background mask is calculated if necessary.
+#   genreat inputs and labels batch
 #
 #
 #arg:
-#   dict_lbl = a tuple ([classes] , [ [label]s , ... ])
-#   cls = class number. If ConsiderBackground == True, the main classes start from 1 and the 0 class is the background maske.
-#       if not, the classes will start at 0.
-#   considerBackground = If true, the 0 class is considered as the background mask class and if necessary, background mask
-#       is calculated.
-#   width = image width
-#   height = image height
+#   annonations_path: path of annonations file
+#   extractor_func: an exrtracor function that get an annonation and returns its image and label
+#   annonations_name: list of file name of desire  annonations. if None , it load all the annonations in path
+#   rescale: rescale value that images and masks divided on it (defualt = 255)
+#   batch_size: size of batchs
+#   aug: augmention object( instance of Augmention() class from augmention.py file. if None there is no augmention
+#   infinit: if False, it returns batchs just for one epoch
 #
 #return:
-#   (class , mask)
-#       class = an array of classes
-#       mask = an array of masks 
+#   (batch_inputs , batch_lbls)
+#   batch_inputs: batch of images that are ready for train
+#   batch_lbls: batch of labels that are ready for train
+#
 #______________________________________________________________________________________________________________________________________________
-def get_img_mask(dic , cls = None ,  considerBackground = False , height = 256 , width = 1600):
-
-    classes = dic[0].copy()
-    labels = dic[1].copy()
-
-    def calc_background_mask(arg_labels = []):
-
-        if len(arg_labels) == 0:
-
-            arg_labels = np.array(
-                    list( map( lambda x: conv_label_to_mask(x , width = width , height = height)  , labels ) )
-                )
-
-        all_masks = np.sum(arg_labels , axis = 0).clip(0 , 255)
-        all_masks -= 255
-        all_masks *= -1
-
-        return all_masks
-
-    if considerBackground:
-        classes = list( map(lambda x: x+1 , classes))
-        classes.append(0)
+def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, infinit=True):
     
-        if cls == None:
+    batch_inputs = []
+    batch_lbls = []
+    if annonations_name is None:
+        annonations_name = os.listdir(annonations_path)
+    
+    while infinit:
+        for name in annonations_name:    
+            annonation = read_annotation( annonations_path, name)
+            img, lbl = extractor_func(annonation)
+            if aug is not None:
+                if len(lbl.shape) < 2: #binary or classification
+                    img = aug.augment_single(img)
+                    img = img.astpye(np.float32) / rescale
 
-            labels = np.array(
-                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
-            )
+                else: #Mask
+                    img, lbl = aug.augment_single_byMask(img, lbl)
+                    img = img.astpye(np.float32) / rescale
+                    lbl = lbl.astpye(np.float32) / rescale
+            
+            batch_lbls.append( lbl )
+            batch_inputs.append( img )
 
-            np.insert( labels , 0 , calc_background_mask(labels) , axis = 0)
+            if len(  batch_inputs) == batch_size:
+                yield np.array(batch_inputs), np.array(batch_lbls)
+                batch_inputs, batch_lbls = [] , []
 
-            return classes , labels
 
-        elif cls == 0:
-            return [cls] , [calc_background_mask()]
 
-        else:
-            return [cls] , [_conv_label_to_mask(labels[cls - 1])]
 
-    else:
-        if cls == None:
 
-            labels = np.array(
-                list( map( lambda x: _conv_label_to_mask(x , width = width , height = height)  , labels ) )
-            )
-            return classes , labels
 
-        else:
-            return [cls] , [_conv_label_to_mask(labels[cls])]
+
 
 
 
 if __name__ == '__main__':
-    '''
-
-    csv_list = csv_reader(csv_path)
-    dict_lbl = csv2labelDict(csv_list)
-    imgs_list,b =  get_imgs_list(img_path)
-
-    bin_lbl,_ = get_binary_labels(dict_lbl, imgs_list)
-    classes_lbl,_ = get_class_labels(dict_lbl,imgs_list,4)
-
-    '''
     
-    annonations_name = ['Json_sample.json']
-    path = ''
+    lbls_path = 'severstal-steel-defect-detection/annotations'
+    imgs_path = 'severstal-steel-defect-detection/train_images'
+
+    # extractor_func1 = extact_binary()
+    # extractor_func2 = extract_class(class_num=4, consider_no_object=False)
     
-    filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
-    filtered = filter_annonations(annonations_name, path, filter_arg)
-    annontions_names = get_annonations_name(lbls_path)
+    # gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None)
+    # x1,y1 = next(gen)
+    # x2,y2 = next(gen)
+    # filter_arg={'label_type':["BBOX","MASK"], 'class':[3]}
+    # filtered = filter_annonations(annonations_name, path, filter_arg)
+    # annontions_names = get_annonations_name(lbls_path)
 
-    annontions_names_train,annontions_names_val = split_annonations_name(annontions_names)
-    annotations = read_annotations(annontions_names_train,lbls_path)
-    imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
-    js = Annotation('Json_sample.json')
+    # annontions_names_train, annontions_names_val = split_annonations_name(annontions_names)
+    # annotations = read_annotations(annontions_names_train,lbls_path)
+    # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
+    js = Annotation(os.path.join(lbls_path , '0025bde0c.json' ))
+    print('ssss')
+    a = js.get_encoded_mask(0)
+    img = js.get_decoded_masks(cls=0 , considerBackground=True)[1][0]
+    pass
