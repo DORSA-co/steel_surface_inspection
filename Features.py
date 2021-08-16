@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-
+from skimage import feature
+import os
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -58,5 +59,61 @@ def get_hog(gray, bin_n = 24, split=2):
 def get_hoc(gray, bin_n = 25):
     hist = cv2.calcHist( [gray],[0], None, [24],[0,255]).reshape(-1)
     return hist
+    
+
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   get local binary pattern from gray image
+#
+#arg:
+#   image: gray image ( np.array shape=(w,h), dtype = np.uint8)
+#   P: Number of circularly symmetric neighbour set points (quantization of the angular space)
+#	R: Radius of circle (spatial resolution of the operator)
+# 	method: Method to determine the pattern.
+#	‘default’: original local binary pattern which is gray scale but not rotation invariant.
+#	‘ror’: extension of default implementation which is gray scale and rotation invariant.
+#	‘uniform’: improved rotation invariance with uniform patterns and finer quantization of
+##	the angular space which is gray scale and rotation invariant.
+#	‘nri_uniform’: non rotation - invariant uniform patterns variant which is only gray scale
+##	invariant.
+#	‘var’: rotation invariant variance measures of the contrast of local image texture
+##	which is rotation but not gray scale invariant.
+#
+#return:
+#   hist
+#   hist: histogram of LBP
+#______________________________________________________________________________________________________________________________________________
+def get_lbp(image, P, R, method):
+	# compute the Local Binary Pattern representation
+    # of the image, and then use the LBP representation
+    # to build the histogram of patterns
+    lbp = feature.local_binary_pattern(image, P, R, method)
+    bin_max = lbp.max() + 1
+    range_max = lbp.max()
+    hist, _ = np.histogram(lbp.ravel(), density=False, bins=np.arange(0, bin_max), range=(0, range_max))
+    # normalize the histogram
+    # hist = hist.astype("float")
+    # hist /= (hist.sum() + eps)
+    # return the histogram of Local Binary Patterns
+    return hist
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
