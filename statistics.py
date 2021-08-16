@@ -45,28 +45,31 @@ def defect_pixels_hist(annonation_path , userPercent = False , img_size = (256 *
     buckets = {}
 
     for anot_name in annonation_names:
-        # print(os.path.join(annonation_path , anot_name))
         annotation = Annotation(os.path.join(annonation_path , anot_name))
         if annotation.have_object() :
             mask_list = annotation.get_encoded_mask()
             for mask in mask_list:
                 count = np.sum( mask.codedMask_[:, 1] )
                 add_to_array(buckets , mask.class_ , count) 
+    
+    fig = plt.figure(edgecolor='k' , )
+    ax = fig.add_axes([0.2, 0.15, 0.6, 0.7])
 
-    print(buckets)
     if userPercent:
+        ax.set_ylabel('Pix Number Percent')
         total = sum(buckets.values())
         print(total)
         for key , elm in buckets.items():
             buckets[key] /= (total * 0.01)
+    else:
+        ax.set_ylabel('Pix Number')
+        
+    ax.set_xlabel('Class')
+    ax.set_title('Class-Pixel Bar Chart')
+    bar  = ax.bar(buckets.keys() , buckets.values())
+    ax.bar_label(bar, color='k')
 
-
-    plt.bar(buckets.keys() , buckets.values())
-
-    plt.xlabel('Class')
-    plt.ylabel('Pix Number')
-    plt.title('Class-Pixel Bar Chart')
-    # plt.show()
+    plt.show()
 
 
 
@@ -89,7 +92,7 @@ def class_hist( annonation_path , annonations_name=None ):
     ax.set_title('Histogram of Binary Labels')
     bar = ax.bar(classes_id,counts, width=0.3)
     ax.bar_label(bar, label_type='center', color='w')
-    # plt.show()
+    plt.show()
 
 
 csv_path = 'severstal-steel-defect-detection/train.csv'
