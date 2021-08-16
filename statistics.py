@@ -47,7 +47,7 @@ def defect_pixels_hist(annonation_path , userPercent = False , img_size = (256 *
     for anot_name in annonation_names:
         annotation = Annotation(os.path.join(annonation_path , anot_name))
         if annotation.have_object() :
-            mask_list = annotation.get_encoded_mask()
+            mask_list = annotation.get_masks()
             for mask in mask_list:
                 count = np.sum( mask.codedMask_[:, 1] )
                 add_to_array(buckets , mask.class_ , count) 
