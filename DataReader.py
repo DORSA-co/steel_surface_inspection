@@ -250,7 +250,7 @@ class Annotation():
 #   filtered
 #   filtered: list of annontions_file_name that pass filters
 #______________________________________________________________________________________________________________________________________________
-def filter_annonations(path,filter_arg, annonations_name):
+def filter_annonations(path,filter_arg, annonations_name=None):
 
     def filter_func(annotation_name):
 
@@ -258,7 +258,7 @@ def filter_annonations(path,filter_arg, annonations_name):
             annonation_dict = json.load(jfile)
         
         for filter_key, filter_values in filter_arg.items():
-            if filter_key == 'class':
+            if filter_key.lower() == 'class':
                 classes =[]
                 labels = annonation_dict['labels']
                 for lbl in labels:
@@ -271,7 +271,7 @@ def filter_annonations(path,filter_arg, annonations_name):
                 if not flag:
                     return False                  
             else :
-                if annonation_dict[filter_key] not in filter_values:
+                if annonation_dict[filter_key.lower()] not in filter_values:
                     return False
         
         return True
@@ -279,6 +279,8 @@ def filter_annonations(path,filter_arg, annonations_name):
 
     if annonations_name is None:
         annonations_name = os.listdir(path)
+    
+    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name)) #just pass .json file
 
 
     filtered = list( filter( filter_func, annonations_name))
@@ -301,6 +303,7 @@ def filter_annonations(path,filter_arg, annonations_name):
 #______________________________________________________________________________________________________________________________________________
 def get_annonations_name(path, shuffle=True):
     annonations_name_list = os.listdir(path)
+    annonations_name_list = list( filter( lambda x:x[-5:]=='.json' , annonations_name_list))
     if shuffle:
         random.shuffle(annonations_name_list)
     return annonations_name_list
@@ -320,7 +323,7 @@ def get_annonations_name(path, shuffle=True):
 #   annonations_train_list: list of list of lbl_file_name for validation_file_name for validation
 #   annonations_val_list: list of annontions_file_name for validation
 #______________________________________________________________________________________________________________________________________________
-def split_annonations_name( annonations_name_list, split=0.2, shuffle=True ):
+def split_annonations_name( annonations_name_list=None, split=0.2, shuffle=True ):
     lbls_count = len(annonations_name_list)
     annonations_val_list   = annonations_name_list[ : int(lbls_count * split)]
     annonations_train_list = annonations_name_list[ int(lbls_count * split) : ]
@@ -520,10 +523,12 @@ if __name__ == '__main__':
 
     # extractor_func1 = extact_binary()
     # 
-    filter_annonations()
+    print('Start filter by class 1')
+    annonations_name = filter_annonations( lbls_path, filter_arg={'class':[1]})
+    print('End filter')
 
     extractor_func1 = extact_binary()
-    gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None, rescale=255)
+    gen = generator( lbls_path, extractor_func1, annonations_name=annonations_name, batch_size=32, aug=None, rescale=255)
     x,y = next(gen)
     for i in range(len(x)):
         img = x[i]  * 255
