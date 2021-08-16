@@ -8,7 +8,16 @@ import DataReader
 import numpy as np
 
 
-
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   show Dataset. Just instance an object and it will show images and labels
+#
+#arg:
+#   gen: generator function ( from DataReader.py)
+#
+#return:
+#   plot Dataset  automaticly in proper view
+#______________________________________________________________________________________________________________________________________________
 class Viewer():
 
     def __init__(self, gen):
@@ -22,6 +31,14 @@ class Viewer():
         plt.show()
     
 
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   keabord press Event. DONT NEED CALL THIS FUNCTION
+    #
+    #arg:
+    #   event: it obtain when pressed a key on keyboard
+    #
+    #______________________________________________________________________________________________________________________________________________
     def on_press(self, event):
         print('press', event.key)
         
@@ -51,7 +68,14 @@ class Viewer():
         
 
     
-
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   function for plot an image and binary label
+    #
+    #arg:
+    #   img: numpy array of image in BGR format
+    #   lbl: binary label that is a numpy number ( 0 or 1)
+    #______________________________________________________________________________________________________________________________________________
     def binary(self, img, lbl):
         H = 50
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -80,7 +104,14 @@ class Viewer():
         plt.show()
 
 
-
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   function for plot an image and classification label
+    #
+    #arg:
+    #   img: numpy array of image in BGR format
+    #   lbl: classification label in format of ONE_HOT_CODE that is a numpy number ( shape= (n,) )
+    #______________________________________________________________________________________________________________________________________________
     def classification(self, img, lbl):
         H = 50
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -112,6 +143,14 @@ class Viewer():
 
 
 
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   function for plot an image and mask label
+    #
+    #arg:
+    #   img: numpy array of image in BGR format
+    #   lbl: mask label in that is a numpy number ( shape= (n,h,w) )
+    #______________________________________________________________________________________________________________________________________________
     def mask(self, img, lbl):
         H = 50
         border = 0.025
@@ -141,7 +180,13 @@ class Viewer():
 
 
     
-
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   sample an data row (img,lbl) from generator
+    #
+    #arg:
+    #   state: if state=='next' returned the next data row. else if state=='back' it returned perivous data row
+    #______________________________________________________________________________________________________________________________________________
     def sample(self, state ):
         if state =='next':
             self.idx+=1
