@@ -60,12 +60,12 @@ class Mask():
 
     
     def get_mask(self):
-        return self.mask
+        return self.__mask__
     
 
 
     def get_class_id(self):
-        return self.class_id
+        return self.__class_id__
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -119,7 +119,7 @@ class Mask():
 #   -------------------------------
 #   get_masks:
 #       explain:
-#           return list of mask objects in format of Mask() class
+#           return list of objects label contain masks and classes in format of Label() class
 #   -------------------------------
 #   get_encoded_mask:
 #       explain:
@@ -235,7 +235,6 @@ class Annotation():
 #   filter annonation_name list base of filter_arg 
 #
 #arg:
-#   annonation_name: list of annonation's name
 #
 #   path: path of annonations folder
 #
@@ -243,13 +242,15 @@ class Annotation():
 #   their values are a list of acceptabel values for related features. this Values are or by each other. it's also accept
 #   the "class" key and don't accept "label" key for e.g if the filter_arg be { 'label_type':["MASK"], "class":[1,2] }
 #   it pass annonations that their label_type are "MASK" and their object's class consist one of 1 or 2 class or both of them
+#
+#   annonation_name: list of annonation's name, if None, it read all the annonatons in the path
 #   
 #
 #return:
 #   filtered
 #   filtered: list of annontions_file_name that pass filters
 #______________________________________________________________________________________________________________________________________________
-def filter_annonations(annonations_name, path,filter_arg):
+def filter_annonations(path,filter_arg, annonations_name):
 
     def filter_func(annotation_name):
 
@@ -274,6 +275,11 @@ def filter_annonations(annonations_name, path,filter_arg):
                     return False
         
         return True
+    
+
+    if annonations_name is None:
+        annonations_name = os.listdir(path)
+
 
     filtered = list( filter( filter_func, annonations_name))
     return filtered
@@ -401,14 +407,13 @@ def extract_class( class_num, consider_no_object=False):
 #   get an anonations( instance of Anonation() class ) and return its image and mask label
 #
 #arg:
-#   class_num, mask_size, consider_no_object, class_id
+#   class_num, mask_size, consider_no_object
 #   class_num: number of class. no_object class shouldn't acount
 #   mask_size: size of results mask in format of (h,w)
 #   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
-#   class_id: if be None, it return all masks else it just return that specific class mask
 #
 #return:
-#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, mask_label ( in shape of (h,w,num_class) )
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, classificaiotn_label ( in one_hot_code format )
 #______________________________________________________________________________________________________________________________________________
 def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None):
     def func(annotation):
@@ -515,6 +520,18 @@ if __name__ == '__main__':
 
     # extractor_func1 = extact_binary()
     # 
+    filter_annonations()
+
+    extractor_func1 = extact_binary()
+    gen = generator( lbls_path, extractor_func1, annonations_name=None, batch_size=32, aug=None, rescale=255)
+    x,y = next(gen)
+    for i in range(len(x)):
+        img = x[i]  * 255
+        img = img.astype( np.uint8 )  
+        cv2.imshow('img', img)
+        cv2.waitKey(0)
+        print('BINARY',y[i])
+
 
 
 
