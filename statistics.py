@@ -58,8 +58,8 @@ def defect_pixels_hist(annonation_path , userPercent = False , img_size = (256 *
         if annotation.have_object() :
             mask_list = annotation.get_masks()
             for mask in mask_list:
-                count = np.sum( mask.codedMask_[:, 1] )
-                add_to_array(buckets , mask.class_ , count) 
+                count = np.sum( mask.__coded_mask__[:, 1] )
+                add_to_array(buckets , mask.class_id , count) 
     
     fig = plt.figure(edgecolor='k' , )
     ax = fig.add_axes([0.2, 0.15, 0.6, 0.7])
@@ -138,8 +138,8 @@ if __name__ == '__main__':
     csv_path = 'severstal-steel-defect-detection/train.csv'
     img_path = 'severstal-steel-defect-detection/train_images'
     annonation_path = 'severstal-steel-defect-detection/annotations'
-    # class_hist(annonation_path=annonation_path, annonations_name= None)
+    class_hist(annonation_path=annonation_path, annonations_name= None)
     # binary_hist(annonation_path=annonation_path, annonations_name= None)
-    defect_pixels_hist(annonation_path , userPercent=True)
+    # defect_pixels_hist(annonation_path , userPercent=True)
 
 
