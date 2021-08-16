@@ -60,12 +60,12 @@ class Mask():
 
     
     def get_mask(self):
-        return self.mask
+        return self.__mask__
     
 
 
     def get_class_id(self):
-        return self.class_id
+        return self.__class_id__
 
 
 #______________________________________________________________________________________________________________________________________________
@@ -119,7 +119,7 @@ class Mask():
 #   -------------------------------
 #   get_masks:
 #       explain:
-#           return list of mask objects in format of Mask() class
+#           return list of objects label contain masks and classes in format of Label() class
 #   -------------------------------
 #   get_encoded_mask:
 #       explain:
@@ -235,7 +235,6 @@ class Annotation():
 #   filter annonation_name list base of filter_arg 
 #
 #arg:
-#   annonation_name: list of annonation's name
 #
 #   path: path of annonations folder
 #
@@ -243,13 +242,15 @@ class Annotation():
 #   their values are a list of acceptabel values for related features. this Values are or by each other. it's also accept
 #   the "class" key and don't accept "label" key for e.g if the filter_arg be { 'label_type':["MASK"], "class":[1,2] }
 #   it pass annonations that their label_type are "MASK" and their object's class consist one of 1 or 2 class or both of them
+#
+#   annonation_name: list of annonation's name, if None, it read all the annonatons in the path
 #   
 #
 #return:
 #   filtered
 #   filtered: list of annontions_file_name that pass filters
 #______________________________________________________________________________________________________________________________________________
-def filter_annonations(annonations_name, path,filter_arg):
+def filter_annonations(path,filter_arg, annonations_name=None):
 
     def filter_func(annotation_name):
 
@@ -257,7 +258,7 @@ def filter_annonations(annonations_name, path,filter_arg):
             annonation_dict = json.load(jfile)
         
         for filter_key, filter_values in filter_arg.items():
-            if filter_key == 'class':
+            if filter_key.lower() == 'class':
                 classes =[]
                 labels = annonation_dict['labels']
                 for lbl in labels:
@@ -270,10 +271,17 @@ def filter_annonations(annonations_name, path,filter_arg):
                 if not flag:
                     return False                  
             else :
-                if annonation_dict[filter_key] not in filter_values:
+                if annonation_dict[filter_key.lower()] not in filter_values:
                     return False
         
         return True
+    
+
+    if annonations_name is None:
+        annonations_name = os.listdir(path)
+    
+    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name)) #just pass .json file
+
 
     filtered = list( filter( filter_func, annonations_name))
     return filtered
@@ -295,6 +303,7 @@ def filter_annonations(annonations_name, path,filter_arg):
 #______________________________________________________________________________________________________________________________________________
 def get_annonations_name(path, shuffle=True):
     annonations_name_list = os.listdir(path)
+    annonations_name_list = list( filter( lambda x:x[-5:]=='.json' , annonations_name_list))
     if shuffle:
         random.shuffle(annonations_name_list)
     return annonations_name_list
@@ -314,7 +323,7 @@ def get_annonations_name(path, shuffle=True):
 #   annonations_train_list: list of list of lbl_file_name for validation_file_name for validation
 #   annonations_val_list: list of annontions_file_name for validation
 #______________________________________________________________________________________________________________________________________________
-def split_annonations_name( annonations_name_list, split=0.2, shuffle=True ):
+def split_annonations_name( annonations_name_list=None, split=0.2, shuffle=True ):
     lbls_count = len(annonations_name_list)
     annonations_val_list   = annonations_name_list[ : int(lbls_count * split)]
     annonations_train_list = annonations_name_list[ int(lbls_count * split) : ]
@@ -401,14 +410,13 @@ def extract_class( class_num, consider_no_object=False):
 #   get an anonations( instance of Anonation() class ) and return its image and mask label
 #
 #arg:
-#   class_num, mask_size, consider_no_object, class_id
+#   class_num, mask_size, consider_no_object
 #   class_num: number of class. no_object class shouldn't acount
 #   mask_size: size of results mask in format of (h,w)
 #   consider_no_object: if True, it Allocates a new class to no object. it's class is 0 class. defuat is False
-#   class_id: if be None, it return all masks else it just return that specific class mask
 #
 #return:
-#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, mask_label ( in shape of (h,w,num_class) )
+#   func: extractor function, that get an annonation ( Instance if Annonation() class ) and return image, classificaiotn_label ( in one_hot_code format )
 #______________________________________________________________________________________________________________________________________________
 def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None):
     def func(annotation):
@@ -515,6 +523,20 @@ if __name__ == '__main__':
 
     # extractor_func1 = extact_binary()
     # 
+    print('Start filter by class 1')
+    annonations_name = filter_annonations( lbls_path, filter_arg={'class':[1]})
+    print('End filter')
+
+    extractor_func1 = extact_binary()
+    gen = generator( lbls_path, extractor_func1, annonations_name=annonations_name, batch_size=32, aug=None, rescale=255)
+    x,y = next(gen)
+    for i in range(len(x)):
+        img = x[i]  * 255
+        img = img.astype( np.uint8 )  
+        cv2.imshow('img', img)
+        cv2.waitKey(0)
+        print('BINARY',y[i])
+
 
 
 
