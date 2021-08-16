@@ -75,10 +75,11 @@ def class_hist( annonation_path , annonations_name=None ):
 
 
 
-csv_path = 'severstal-steel-defect-detection/train.csv'
-img_path = 'severstal-steel-defect-detection/train_images'
-annonation_path = 'severstal-steel-defect-detection/annotations'
-class_hist(annonation_path=annonation_path, annonations_name= None)
+
+if __name__ == '__main__':
+    csv_path = 'severstal-steel-defect-detection/train.csv'
+    img_path = 'severstal-steel-defect-detection/train_images'
+    annonation_path = 'severstal-steel-defect-detection/annotations'
+    class_hist(annonation_path=annonation_path, annonations_name= None)
 
 
-stop
