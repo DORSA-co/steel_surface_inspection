@@ -25,14 +25,45 @@ class ModelBuilder():
 
         return json_file
 
+    ## This function will later utlize to grab the json data directly from LabView or any other program
+    def __grab__(self):
+        pass
 
-    def __init__(self , path):
-        self.__json = self.__read__(path)
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   initializer. If a path is passed, the object will automaticaly tries to read the json the file from the path.
+    #   if not, the # build function is not available # and user can use the model_generator functions directly.
+    #
+    #arg:
+    #   path
+    #       path: a valid path to config.json file
+    #return:
+    # 
+    #______________________________________________________________________________________________________________________________________________    
+    def __init__(self , path = None):
+        if path is not None:
+            self.__json = self.__read__(path)
+
+    
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   using the json data passed to the object, this method will call model_generator methods and return the coresponding model.
+    #   current available model_generator functions are:
+    #       simple_cnn2cnn
+    #       simple_cnn2dense
+    #       simple_dense2dense
+    #
+    #arg:
+    #
+    #return:
+    #   model
+    #______________________________________________________________________________________________________________________________________________    
 
     def build(self):
 
-
         ## Assigning a dictionary name (using the names listed in configsample.json) to each function
+        ## the values will later be used directly to call model_generator functions
         generator_dict = {
             'c2c' : self.simple_cnn2cnn,
             'c2d' : self.simple_cnn2dense,
@@ -65,6 +96,18 @@ class ModelBuilder():
 
 
     
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   build a model coresponds to args
+    #arg:
+    #   input_shape, output_neuron, output_type
+    #   input_shape: shape of inputs in tuple format. the shape should be (h,w,channle)
+    #   output_neuron: numbrer of channel in last layer. it show numner of output for each pixel in output array
+    #   output_type: type of outbut that could be BINARY, CLASSIFICATION
+    #
+    #return:
+    #   model
+    #______________________________________________________________________________________________________________________________________________
     def simple_dense2dense(self ,  input_shape , output_neuron, output_type ):
         model = keras.Sequential()
         model.add( keras.layers.Input(shape = input_shape) )
@@ -137,8 +180,8 @@ class ModelBuilder():
 
 if __name__ == '__main__':
     print('start')
-    # modelinit = ModelBuilder()
-    # model = modelinit.cnn2dense( (300,300,3), 30, BINARY )
+    # model_builder = ModelBuilder()
+    # model = model_builder.simple_cnn2dense( (300,300,3), 30, BINARY )
     model_builder = ModelBuilder(r'model_config\config-test.json')
     model = model_builder.build()
     model.summary()
