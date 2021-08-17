@@ -40,7 +40,15 @@ def binary_hist(annonation_path, annonations_name=None):
     plt.show()
 
 
-def defect_pixels_hist(annonation_path , userPercent = False , img_size = (256 * 1600)):
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   draw histogram of pixels of maske for each class 
+#atribiut:
+#   annonation_path: path of annonations folder( jason files)
+#   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
+#   userPercent:????????????????/
+#______________________________________________________________________________________________________________________________________________
+def defect_pixels_hist(annonation_path , userPercent = False ):
 
     annonation_names = os.listdir(annonation_path)
 
@@ -128,7 +136,7 @@ def class_hist( annonation_path , annonations_name=None ):
     fig = plt.figure()
     ax = fig.add_axes([0.2, 0.1, 0.6, 0.8])
     ax.set_ylabel('Count')
-    ax.set_title('Histogram of Binary Labels')
+    ax.set_title('Histogram of Class Labels')
     bar = ax.bar(classes_id,counts, width=0.3)
     ax.bar_label(bar, label_type='center', color='w')
     plt.show()
@@ -140,6 +148,6 @@ if __name__ == '__main__':
     annonation_path = 'severstal-steel-defect-detection/annotations'
     class_hist(annonation_path=annonation_path, annonations_name= None)
     # binary_hist(annonation_path=annonation_path, annonations_name= None)
-    # defect_pixels_hist(annonation_path , userPercent=True)
+    defect_pixels_hist(annonation_path , userPercent=True)
 
 
