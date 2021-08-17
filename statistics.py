@@ -79,7 +79,7 @@ def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = Fa
     if userPercent:
         ax.set_ylabel('Pix Number Percent')
         total = sum(buckets.values())
-        print(total)
+        #print(total)
         for key , elm in buckets.items():
             buckets[key] /= (total * 0.01)
     else:
@@ -100,32 +100,6 @@ def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = Fa
 #   annonation_path: path of annonations folder( jason files)
 #   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
 #______________________________________________________________________________________________________________________________________________
-def class_hist( annonation_path , annonations_name=None ):
-    if annonations_name is None:
-        annonations_name = os.listdir( annonation_path )
-    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
-
-    all_classes = []
-    for name in annonations_name:
-        path = os.path.join( annonation_path, name) 
-        anonation = Annotation(path)
-        if anonation.have_object():
-            all_classes.extend( list( anonation.get_classes() )) 
-    all_classes = np.array( all_classes)
-    classes_id , counts = np.unique( all_classes, return_counts=True)
-    classes_id = list(classes_id)
-    classes_id = list( map( lambda x: 'Class_' + str(x), classes_id))
-    fig = plt.figure()
-    ax = fig.add_axes([0.2, 0.1, 0.6, 0.8])
-    ax.set_ylabel('Count')
-    ax.set_title('Histogram of Binary Labels')
-    bar = ax.bar(classes_id,counts, width=0.3)
-    ax.bar_label(bar, label_type='center', color='w')
-    plt.show()
-
-
-
-
 def class_hist( annonation_path , annonations_name=None ):
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
