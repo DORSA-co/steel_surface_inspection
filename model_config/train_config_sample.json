@@ -7,7 +7,7 @@
     "learning-rate": "double",
     "validation-split" : "double",
 
-    "model-conig-path" : "valid-directory",
+    "model-config-path" : "valid-directory",
     "model-serialization-path" : "valid-directory"
 
 }
