@@ -1,0 +1,14 @@
+{
+    "train-data-path":"valid-directory",
+    "train-label-path":"valid-directory",
+
+    "epochs": 20,
+    "batch-size" :32,
+    "learning-rate": 0.001,
+    "validation-split" : 0.2,
+
+    "model-conig-path" : "valid-directory",
+	"checkpoint-path": "load weight path",
+    "save-weights-path" : "valid-directory"
+
+}
