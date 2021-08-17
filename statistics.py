@@ -65,7 +65,7 @@ def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = Fa
 
     buckets = {}
 
-    for anot_name in annonation_names:
+    for anot_name in annonations_name:
         annotation = Annotation(os.path.join(annonation_path , anot_name))
         if annotation.have_object() :
             mask_list = annotation.get_masks()
@@ -104,7 +104,7 @@ def class_hist( annonation_path , annonations_name=None ):
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
     annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
-    
+
     all_classes = []
     for name in annonations_name:
         path = os.path.join( annonation_path, name) 
