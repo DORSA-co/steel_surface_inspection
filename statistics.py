@@ -17,6 +17,7 @@ def binary_hist(annonation_path, annonations_name=None):
 
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
+    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
 
     count_free  = 0
     count_object = 0
@@ -48,9 +49,12 @@ def binary_hist(annonation_path, annonations_name=None):
 #   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
 #   userPercent:????????????????/
 #______________________________________________________________________________________________________________________________________________
-def defect_pixels_hist(annonation_path , userPercent = False ):
+def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = False ):
 
-    annonation_names = os.listdir(annonation_path)
+    if annonations_name is None:
+        annonations_name = os.listdir( annonation_path )
+    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
+    
 
     def add_to_array(inp_dic , cls , count):
         if cls in inp_dic.keys():
@@ -99,6 +103,8 @@ def defect_pixels_hist(annonation_path , userPercent = False ):
 def class_hist( annonation_path , annonations_name=None ):
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
+    annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
+    
     all_classes = []
     for name in annonations_name:
         path = os.path.join( annonation_path, name) 
