@@ -10,10 +10,36 @@ def get_lbp(image, P, R, method, queue):
     # compute the Local Binary Pattern representation
     # of the image, and then use the LBP representation
     # to build the histogram of patterns
-    lbp = feature.local_binary_pattern(image, P, R, method)
-    bin_max = lbp.max() + 2
-    range_max = lbp.max() + 1
-    hist, _ = np.histogram(lbp.ravel(), density=False, bins=np.arange(0, bin_max), range=(0, range_max))
+    h, w = image.shape
+    # divide image into n*n subimage
+    n = 8
+    dimx = int(h / n)
+    dimy = int(w / n)
+    # calculate weight for each subimage: w_i = sum(g(x,y)^2)/sg - (sum(g(x, y))/sg)^2 for each x, y, where g is subimage and sg is dimension of subimage
+    weight = np.zeros(n ** 2)
+    c = 0
+    for i in range(dimx, h + 1, dimx):
+        for j in range(dimy, w + 1, dimy):
+            Re = image[i - dimx:i, j - dimy:j]
+            Re2 = Re ** 2
+            weight[c] = (Re2.sum() / (dimx * dimy)) - (Re.sum() / (dimx * dimy)) ** 2
+            c += 1
+    # normalize weight between [0, 1]
+    weight = (weight - np.min(weight)) / np.ptp(weight)
+    c = 0
+    if method=='uniform':
+        bins = P + 2
+    else:
+        bins = int(math.pow(2, P))
+    hist = np.zeros(bins, dtype='int64')
+    # calculate lbp histogram for each subimage if it's weight is more than average of weights
+    for i in range(dimx, h + 1, dimx):
+        for j in range(dimy, w + 1, dimy):
+            if weight[c] >= np.average(weight):
+                lbp = feature.local_binary_pattern(image[i-dimx:i, j-dimy:j], P, R, method)
+                h, _ = np.histogram(lbp.ravel(), density=False, bins=np.arange(0, bins+1), range=(0, bins))
+                hist = np.add(hist, h)
+            c += 1
     queue.put({
         'patterns': hist
     })
@@ -52,9 +78,10 @@ def multiPreocessing(image, P, R, method, num_processes):
         #hist = hist + result['patterns']
     return hist
 
-image = imread('/home/reyhane/Desktop/a.jpg', 0)
+image = imread('/home/reyhane/Desktop/b.jpg', 0)
 start_time = timeit.default_timer()
 hist = multiPreocessing(image, 8, 1, 'uniform', 8)
-print(hist)
 end_time = timeit.default_timer()
 print(end_time - start_time)
+
+
