@@ -467,7 +467,9 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
 #   rescale: rescale value that images and masks divided on it (defualt = 255)
 #   batch_size: size of batchs
 #   aug: augmention object( instance of Augmention() class from augmention.py file. if None there is no augmention
-#   infinit: if False, it returns batchs just for one epoch
+#   resize: if not None, images resize to that. it is in format of (h,w)
+#   featurs_extractor: list of feature_extractor functions that apply on images
+# 
 #
 #return:
 #   (batch_inputs , batch_lbls)
@@ -475,7 +477,7 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
 #   batch_lbls: batch of labels that are ready for train
 #
 #______________________________________________________________________________________________________________________________________________
-def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, resize=None):
+def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, resize=None, featurs_extractor=None):
     
     batch_inputs = []
     batch_lbls = []
@@ -497,14 +499,31 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
             
             if resize is not None:
                 img = cv2.resize(img, resize[::-1])
-            img = img.astype(np.float32) / rescale
-            if len(lbl.shape) > 2:
-                lbl = lbl.astype(np.float32) / rescale
+            
             
 
             
             batch_lbls.append( lbl )
-            batch_inputs.append( img )
+
+            if featurs_extractor is None:
+                img = img.astype(np.float32) / rescale
+                if len(lbl.shape) > 2:
+                    lbl = lbl.astype(np.float32) / rescale
+                batch_inputs.append( img )
+
+            else :
+                feature_vestor=[]
+                for featur_extractor in featurs_extractor:
+                    f = featur_extractor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+                    feature_vestor.append(f)
+                feature_vestor = np.concatenate(feature_vestor)
+                batch_inputs.append( feature_vestor )
+
+                if len(lbl.shape) > 2:
+                    lbl = lbl.astype(np.float32) / rescale
+
+
+
 
             if len(  batch_inputs) == batch_size:
                 yield np.array(batch_inputs), np.array(batch_lbls)
