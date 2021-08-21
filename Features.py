@@ -61,11 +61,16 @@ def get_hog(bin_n = 24, split=2):
 #   hist
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
-def get_hoc(bin_n = 25):
+def get_hoc(bin_n = 25, split=2):
     def extractor(gray):
-        hist = cv2.calcHist( [gray],[0], None, [bin_n],[0,255]).reshape(-1)
-        hist = hist - hist.mean()
-        hist = hist / hist.std()
+        h,w = gray.shape
+        hists = []
+        for i in range(split):
+            for j in range(split):
+                roi = gray[h//split*i:h//split*(i+1) ,     w//split*j:w//split*(j+1)] 
+
+                hists.append( cv2.calcHist( [roi],[0], None, [bin_n],[0,255]).reshape(-1) )
+        hist = np.concatenate(hists)
         return hist
     return extractor
         
