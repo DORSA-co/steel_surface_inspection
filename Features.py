@@ -58,9 +58,8 @@ def get_hog(bin_n = 24, split=2):
 #   hist
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
-def get_hoc(gray, bin_n = 25):
+def get_hoc(bin_n = 25):
     def extractor(gray):
-        
         hist = cv2.calcHist( [gray],[0], None, [bin_n],[0,255]).reshape(-1)
         return hist
     return extractor
