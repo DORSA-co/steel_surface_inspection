@@ -278,6 +278,7 @@ def filter_annonations(path,filter_arg, annonations_name=None):
     
 
     if annonations_name is None:
+        assert os.path.isdir(path) , f"The following path is not available! \n {path} "
         annonations_name = os.listdir(path)
     
     annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name)) #just pass .json file
@@ -302,6 +303,7 @@ def filter_annonations(path,filter_arg, annonations_name=None):
 #   annonations_name_list: list of annontions_file_name ( jason file's name)
 #______________________________________________________________________________________________________________________________________________
 def get_annonations_name(path, shuffle=True):
+    assert os.path.isdir(path) , f"The following path is not available! \n {path} "
     annonations_name_list = os.listdir(path)
     annonations_name_list = list( filter( lambda x:x[-5:]=='.json' , annonations_name_list))
     if shuffle:
@@ -478,6 +480,7 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
     batch_inputs = []
     batch_lbls = []
     if annonations_name is None:
+        assert os.path.isdir(annonations_path) , f"The following path is not available! \n {path} "
         annonations_name = os.listdir(annonations_path)
     
     while True:
