@@ -1,7 +1,6 @@
 {
     "train-data-path":"",
-    "train-label-path":"severstal-steel-defect-detection/annotations",
-	"class-num":1,
+    "train-label-path":"",
 
     "epochs": 20,
     "batch-size" :16,

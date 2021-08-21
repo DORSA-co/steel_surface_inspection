@@ -1,0 +1,7 @@
+{
+    "model-type": "c2d",
+    "input-dimension" : [128, 800, 3],
+    "output-neuron_count" : "1",
+    "output-type" : "bin"
+    
+}
