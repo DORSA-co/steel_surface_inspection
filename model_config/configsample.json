@@ -1,7 +1,0 @@
-{
-    "model-type": "c2c / c2d / d2d",
-    "input-dimension" : ["[n] for one dimension input and [n*m*p] for three dimensional input"],
-    "output-neuron_count" : "an integer resembling number of output / ouput_channels",
-    "output-type" : "reg / cls / bin"
-    
-}
