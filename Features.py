@@ -3,6 +3,8 @@ import numpy as np
 #from skimage import feature
 import os
 
+from tensorflow.python.ops.gen_array_ops import split
+
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -20,7 +22,7 @@ import os
 #   hist
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
-def get_hog(bin_n = 24, split=2):
+def get_hog(bin_n = 24, split_h=2,split_w=2):
     def extractor(gray):
         h,w = gray.shape
         gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)
@@ -31,13 +33,13 @@ def get_hog(bin_n = 24, split=2):
         bin_cells = []
         mag_cells = []
         
-        for i in range(split):
-            for j in range(split):
-                bin_cells.append( bins[h//split*i:h//split*(i+1) ,
-                                    w//split*j:w//split*(j+1)] )
+        for i in range(split_h):
+            for j in range(split_w):
+                bin_cells.append( bins[h//split_h*i:h//split_h*(i+1) ,
+                                    w//split_w*j:w//split_w*(j+1)] )
 
-                mag_cells.append( mag[h//split*i:h//split*(i+1) ,
-                                    w//split*j:w//split*(j+1)] )
+                mag_cells.append( mag[h//split_h*i:h//split_h*(i+1) ,
+                                    w//split_w*j:w//split_w*(j+1)] )
             
         hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
         hist = np.hstack(hists) #hist is a 64 bit vector
@@ -61,13 +63,13 @@ def get_hog(bin_n = 24, split=2):
 #   hist
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
-def get_hoc(bin_n = 25, split=2):
+def get_hoc(bin_n = 25, split_h=2, split_w=2):
     def extractor(gray):
         h,w = gray.shape
         hists = []
-        for i in range(split):
-            for j in range(split):
-                roi = gray[h//split*i:h//split*(i+1) ,     w//split*j:w//split*(j+1)] 
+        for i in range(split_h):
+            for j in range(split_w):
+                roi = gray[h//split_h*i:h//split_h*(i+1) ,     w//split_w*j:w//split_w*(j+1)] 
 
                 hists.append( cv2.calcHist( [roi],[0], None, [bin_n],[0,255]).reshape(-1) )
         hist = np.concatenate(hists)
@@ -119,9 +121,9 @@ def get_lbp(image, P, R, method):
 
 if __name__=='__main__':
     img = cv2.imread('severstal-steel-defect-detection/test_images/00f3799a7.jpg',0)
-    func = get_hog(bin_n=25,split=2)
+    func = get_hog(bin_n=25,split_h=2, split_w=5)
     h = func(img)
-    print(h)
+    print(h, h.shape)
     pass
 
 
