@@ -73,6 +73,8 @@ def get_hoc(bin_n = 25, split_h=2, split_w=2):
 
                 hists.append( cv2.calcHist( [roi],[0], None, [bin_n],[0,255]).reshape(-1) )
         hist = np.concatenate(hists)
+        hist = hist - hist.mean()
+        hist = hist / hist.std()
         return hist
     return extractor
         
