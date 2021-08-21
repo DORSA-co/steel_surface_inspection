@@ -41,6 +41,9 @@ def get_hog(bin_n = 24, split=2):
             
         hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
         hist = np.hstack(hists) #hist is a 64 bit vector
+        #hist = hist.astype(np.float32) / ( (h//split) * (w//split)  )
+        hist = hist - hist.mean()
+        hist = hist / hist.std()
         return hist
     return extractor
 
@@ -61,6 +64,8 @@ def get_hog(bin_n = 24, split=2):
 def get_hoc(bin_n = 25):
     def extractor(gray):
         hist = cv2.calcHist( [gray],[0], None, [bin_n],[0,255]).reshape(-1)
+        hist = hist - hist.mean()
+        hist = hist / hist.std()
         return hist
     return extractor
         
@@ -107,6 +112,12 @@ def get_lbp(image, P, R, method):
 
 
 
+if __name__=='__main__':
+    img = cv2.imread('severstal-steel-defect-detection/test_images/00f3799a7.jpg',0)
+    func = get_hog(bin_n=25,split=2)
+    h = func(img)
+    print(h)
+    pass
 
 
 
