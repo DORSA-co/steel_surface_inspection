@@ -10,6 +10,6 @@
 
     "model-conig-path" : "configs/config-model.json",
 	"checkpoint-path": "load weight path",
-    "save-weights-path" : "valid-directory"
+    "save-weights-path" : "weights"
 
 }

@@ -7,6 +7,25 @@ import DataReader
 import augmention
 import DataViewr
 import Features
+import  tensorflow as tf
+import os
+
+
+#______________________________________________________________________________________________________________________________________
+#
+#______________________________________________________________________________________________________________________________________
+cpu = tf.config.experimental.list_physical_devices('CPU')[0]
+gpu = tf.config.experimental.list_physical_devices('GPU')
+if len(gpu)>0:
+    gpu = gpu[0]
+    tf.config.experimental.set_memory_growth(gpu, True)
+    #tf.config.experimental.set_visible_devices(cpu)
+    print("GPU known")
+else :
+    print("GPU unknown")
+
+
+
 
 
 __loss_dict__ = { ModelDeveloper.BINARY: keras.losses.binary_crossentropy,
@@ -16,8 +35,6 @@ __loss_dict__ = { ModelDeveloper.BINARY: keras.losses.binary_crossentropy,
             ModelDeveloper.NORMAL_REGRESSION: keras.losses.mse
 
         }
-
-
 
 
 
@@ -97,26 +114,53 @@ if __name__ == "__main__":
 
     model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
     model = model_developer.build()
-    model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), loss= __loss_dict__[ model_developer.output_type ] )
-
+    model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), loss= __loss_dict__[ model_developer.output_type ], metrics=['acc'] )
+    model.summary()
 
     
     
     aug = augmention.augmention()
+    featurs_extractor=[Features.get_hog(bin_n=25,split_h=2,split_w=5)]#, Features.get_hoc(bin_n=25, split=2)]
     if model_developer.output_type == ModelDeveloper.BINARY:
         extractor_func = DataReader.extact_binary()
 
     elif model_developer.output_type == ModelDeveloper.CLASSIFICATION:
         extractor_func = DataReader.extract_class(train_config.get_class_num(), False)
-
     
-    featurs_extractor=[Features.get_hog(bin_n=25,split=2), Features.get_hoc(bin_n=25, split=2)]
 
-    gen = DataReader.generator( train_config.get_lbls_path(), extractor_func, annonations_name=None, batch_size=train_config.get_batch_size(), aug=aug, rescale=255, resize=(128,800), featurs_extractor=featurs_extractor)
-    DataViewr.Viewer(gen)
-    pass
+    annonations_name = DataReader.get_annonations_name(train_config.get_lbls_path())
 
-
+    trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=train_config.get_validation_split())
+    
 
 
+
+    train_gen = DataReader.generator( train_config.get_lbls_path(),
+                                extractor_func,
+                                annonations_name=trains_list,
+                                batch_size=train_config.get_batch_size(),
+                                aug=None,
+                                rescale=255, resize=(128,800),
+                                featurs_extractor=featurs_extractor
+                                )
+    
+    val_gen = DataReader.generator( train_config.get_lbls_path(),
+                                extractor_func,
+                                annonations_name=val_list,
+                                batch_size=train_config.get_batch_size(),
+                                aug=None,
+                                rescale=255, resize=(128,800),
+                                featurs_extractor=featurs_extractor
+                                )
+    
+    model.fit( train_gen,
+    validation_data=val_gen,
+    batch_size=train_config.get_batch_size(),
+    epochs = train_config.get_epochs(),
+    steps_per_epoch = len(trains_list)//train_config.get_epochs(),
+    validation_steps = len(val_list)//train_config.get_epochs()
+    )
+
+    model.save( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
+    
     

@@ -1,6 +1,6 @@
 {
-    "model-type": "c2d",
-    "input-dimension" : [128, 800, 3],
+    "model-type": "d2d",
+    "input-dimension" : [250],
     "output-neuron_count" : "1",
     "output-type" : "bin"
     
