@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from skimage import feature
+#from skimage import feature
 import os
 
 
@@ -20,27 +20,29 @@ import os
 #   hist
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
-def get_hog(gray, bin_n = 24, split=2):
-    h,w = gray.shape
-    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)
-    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1)
-    mag, ang = cv2.cartToPolar(gx, gy)
-    bins = np.int32(bin_n*ang/(2*np.pi)) #quantizing binvalues in (0...16)
+def get_hog(bin_n = 24, split=2):
+    def extractor(gray):
+        h,w = gray.shape
+        gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bins = np.int32(bin_n*ang/(2*np.pi)) #quantizing binvalues in (0...16)
 
-    bin_cells = []
-    mag_cells = []
-    
-    for i in range(split):
-        for j in range(split):
-            bin_cells.append( bins[h//split*i:h//split*(i+1) ,
-                                   w//split*j:w//split*(j+1)] )
-
-            mag_cells.append( mag[h//split*i:h//split*(i+1) ,
-                                   w//split*j:w//split*(j+1)] )
+        bin_cells = []
+        mag_cells = []
         
-    hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
-    hist = np.hstack(hists) #hist is a 64 bit vector
-    return hist
+        for i in range(split):
+            for j in range(split):
+                bin_cells.append( bins[h//split*i:h//split*(i+1) ,
+                                    w//split*j:w//split*(j+1)] )
+
+                mag_cells.append( mag[h//split*i:h//split*(i+1) ,
+                                    w//split*j:w//split*(j+1)] )
+            
+        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists) #hist is a 64 bit vector
+        return hist
+    return extractor
 
 
 
@@ -57,9 +59,12 @@ def get_hog(gray, bin_n = 24, split=2):
 #   hist: histogram of color (np.array shape(bin_n,))
 #______________________________________________________________________________________________________________________________________________
 def get_hoc(gray, bin_n = 25):
-    hist = cv2.calcHist( [gray],[0], None, [24],[0,255]).reshape(-1)
-    return hist
-    
+    def extractor(gray):
+        
+        hist = cv2.calcHist( [gray],[0], None, [bin_n],[0,255]).reshape(-1)
+        return hist
+    return extractor
+        
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
