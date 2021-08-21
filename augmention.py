@@ -11,7 +11,7 @@ from scipy.interpolate import UnivariateSpline
 
 class augmention():
 
-    def __int__(self, shift_range=(-100, 100),
+    def __init__(self, shift_range=(-100, 100),
                     rotation_range=(-10,10),
                     zoom_range=(0.9,1.1),
                     shear_range=(-0.1,0.1),
@@ -24,9 +24,9 @@ class augmention():
         self.rotation_range = rotation_range
         self.zoom_range = zoom_range
         self.shear_range = shear_range
-        self.hflip = hflip
-        self.wflip = wflip
-        self.color_filter = color_filter
+        self.hflip_en = hflip
+        self.wflip_en = wflip
+        self.color_filter_en = color_filter
         self.chance = chance
     
     #______________________________________________________________________________________________________________________________________________
@@ -199,9 +199,6 @@ class augmention():
 
     
     def __spreadLookupTable__(self,x, y):
-        print(x)
-        print(y)
-        print('---------------------')
         spline = UnivariateSpline(x, y)
         return spline(range(256))
         
@@ -261,7 +258,7 @@ class augmention():
         
         func_chance = 0.5
         imgs = [img ] 
-        if np.random.rand() < self.chance or True:
+        if np.random.rand() < self.chance:
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
                 ty = np.random.randint(self.shift_range[0], self.shift_range[1])
@@ -285,15 +282,15 @@ class augmention():
                 imgs = self.shear(imgs, value)
                 #print('shear', value)
 
-            if np.random.rand() < func_chance and self.wflip:
+            if np.random.rand() < func_chance and self.wflip_en:
                 imgs = self.wflip(imgs)
                 #print('wfilp')
 
-            if np.random.rand() < func_chance and self.hflip:
+            if np.random.rand() < func_chance and self.hflip_en:
                 imgs = self.hflip(imgs)
                 #print('hfilp')
 
-            if np.random.rand() < func_chance and self.color_filter:
+            if np.random.rand() < func_chance and self.color_filter_en:
                 imgs = self.color_filter(imgs)
                 #print('color effect')
 
@@ -323,7 +320,7 @@ class augmention():
         
         func_chance = 0.5
         
-        if np.random.rand() < self.chance or True:
+        if np.random.rand() < self.chance:
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
                 ty = np.random.randint(self.shift_range[0], self.shift_range[1])
@@ -383,7 +380,7 @@ class augmention():
         
         func_chance = 0.5
         reses=copy(imgs)
-        if np.random.rand() < self.chance or True:
+        if np.random.rand() < self.chance:
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
                 ty = np.random.randint(self.shift_range[0], self.shift_range[1])
