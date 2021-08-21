@@ -208,8 +208,8 @@ class Viewer():
 
         img = self.batch_img[ self.idx ]
         lbl = self.batch_lbl[ self.idx ]
-
-        img = (img*255).astype(np.uint8)
+        img = (img * (255/img.max()) ).clip(0,255)
+        img = (img).astype(np.uint8)
         #if lbl is mask
         if len(lbl.shape) > 2:
             lbl *= 255
