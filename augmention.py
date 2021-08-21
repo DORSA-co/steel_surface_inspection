@@ -426,22 +426,25 @@ class augmention():
 
 
 
-aug  = augmention()
 
-for i in range(500):
-    print(i/10)
-    img = cv2.imread('0a2c9f2e5.jpg')
-    mask = cv2.imread('m0a2c9f2e5.jpg',0)
 
-    #img , mask = aug.rotate([mask,img], -10)
-    #img , mask = aug.shift([mask,img], 1500, -100)
-    #img , mask = aug.hflip([mask,img] )
-    #img , mask = aug.shear([mask,img], -i/10   )
-    #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
-    #img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
-    #img , mask = aug.color_fliter( [mask,img] )
-    img,mask = aug.augment_single_byMask(img, mask)
-    
-    cv2.imshow('img',img)   
-    cv2.imshow('org',mask)
-    cv2.waitKey(0)
+if __name__ == "__main__":
+    aug  = augmention()
+
+    for i in range(500):
+        print(i/10)
+        img = cv2.imread('0a2c9f2e5.jpg')
+        mask = cv2.imread('m0a2c9f2e5.jpg',0)
+
+        #img , mask = aug.rotate([mask,img], -10)
+        #img , mask = aug.shift([mask,img], 1500, -100)
+        #img , mask = aug.hflip([mask,img] )
+        #img , mask = aug.shear([mask,img], -i/10   )
+        #img , mask = aug.zoomout( [mask,img], zoom_x=.8, zoom_y=0.9)
+        #img , mask = aug.zoom( [mask,img], zoom_x=.5, zoom_y=0.5 )
+        #img , mask = aug.color_fliter( [mask,img] )
+        img,mask = aug.augment_single_byMask(img, mask)
+        
+        cv2.imshow('img',img)   
+        cv2.imshow('org',mask)
+        cv2.waitKey(0)
