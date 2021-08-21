@@ -480,7 +480,7 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
     batch_inputs = []
     batch_lbls = []
     if annonations_name is None:
-        assert os.path.isdir(annonations_path) , f"The following path is not available! \n {path} "
+        assert os.path.isdir(annonations_path) , f"The following path is not available! \n {annonations_path} "
         annonations_name = os.listdir(annonations_path)
     
     while True:
