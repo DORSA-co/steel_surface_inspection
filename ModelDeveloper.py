@@ -84,7 +84,7 @@ class ModelBuilder():
 
         assert self.__json['output-type'] in output_type_dict.keys() , 'Model\'s output type is Not Valid!'
         output_type_val = self.__json['output-type']
-        output_type = output_type_dict[output_type_val]
+        self.output_type = output_type_dict[output_type_val]
         
         input_shape = np.array(
             self.__json['input-dimension']
@@ -92,7 +92,7 @@ class ModelBuilder():
 
         output_neuron = int( self.__json['output-neuron_count'] )
 
-        return generator(input_shape , output_neuron , output_type)
+        return generator(input_shape , output_neuron , self.output_type)
 
 
     
