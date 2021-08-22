@@ -9,7 +9,9 @@ import DataViewr
 import Features
 import  tensorflow as tf
 import os
-
+import statisticsDataset
+import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 
 #______________________________________________________________________________________________________________________________________
 #
@@ -114,13 +116,22 @@ if __name__ == "__main__":
 
     model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
     model = model_developer.build()
-    model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), loss= __loss_dict__[ model_developer.output_type ], metrics=['acc'] )
+    model.compile( keras.optimizers.RMSprop( learning_rate= train_config.get_learning_rate ), loss = __loss_dict__[ model_developer.output_type ], metrics=['acc'] )
     model.summary()
+    print(model.input_shape)
 
     
     
-    aug = augmention.augmention()
-    featurs_extractor=[Features.get_hog(bin_n=25,split_h=2,split_w=5)]#, Features.get_hoc(bin_n=25, split=2)]
+    aug = augmention.augmention(shift_range=(-50, 50),
+                    rotation_range=(-10,10),
+                    zoom_range=(0.9,1.1),
+                    shear_range=(-0.05,0.05),
+                    hflip=True, 
+                    wflip = True, 
+                    color_filter=True,
+                    chance=0.3  )
+
+    featurs_extractor = [ Features.get_hog(bin_n=25, split_h=2, split_w=4),]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
     if model_developer.output_type == ModelDeveloper.BINARY:
         extractor_func = DataReader.extact_binary()
 
@@ -133,14 +144,15 @@ if __name__ == "__main__":
     trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=train_config.get_validation_split())
     
 
-
+    #statisticsDataset.binary_hist(train_config.get_lbls_path(), trains_list)
+    #statisticsDataset.binary_hist(train_config.get_lbls_path(), val_list)
 
     train_gen = DataReader.generator( train_config.get_lbls_path(),
                                 extractor_func,
                                 annonations_name=trains_list,
                                 batch_size=train_config.get_batch_size(),
-                                aug=None,
-                                rescale=255, resize=(128,800),
+                                aug = aug,
+                                rescale=255, resize=(120,800),
                                 featurs_extractor=featurs_extractor
                                 )
     
@@ -153,13 +165,14 @@ if __name__ == "__main__":
                                 featurs_extractor=featurs_extractor
                                 )
     
-    model.fit( train_gen,
-    validation_data=val_gen,
-    batch_size=train_config.get_batch_size(),
-    epochs = train_config.get_epochs(),
-    steps_per_epoch = len(trains_list)//train_config.get_epochs(),
-    validation_steps = len(val_list)//train_config.get_epochs()
-    )
+    model.load_weights( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
+    model.fit(  train_gen,
+                validation_data=val_gen,
+                batch_size=train_config.get_batch_size(),
+                epochs = train_config.get_epochs(),
+                steps_per_epoch = len(trains_list)//train_config.get_epochs(),
+                validation_steps = len(val_list)//train_config.get_epochs()
+                )
 
     model.save( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
     

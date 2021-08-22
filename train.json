@@ -4,7 +4,7 @@
 	"class-num":1,
 
     "epochs": 20,
-    "batch-size" :16,
+    "batch-size" :32,
     "learning-rate": 0.001,
     "validation-split" : 0.2,
 
