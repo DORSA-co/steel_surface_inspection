@@ -52,7 +52,7 @@ class BIN_Metrics():
         metered = tf.cast(metered , tf.float16)
 
         all_neg = tf.cast(
-            tf.reduce_sum( -1 * y_true - 1 ),
+            tf.reduce_sum( 1 - y_true ),
             dtype=tf.float16
         )
 
@@ -100,7 +100,7 @@ class BIN_Metrics():
         metered = tf.cast(metered , tf.float16)
         
         all_neg = tf.cast(
-            tf.reduce_sum( -1 * y_true - 1 ),
+            tf.reduce_sum( 1 - y_true ),
             dtype=tf.float16
         )
 
