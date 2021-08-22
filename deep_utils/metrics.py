@@ -24,13 +24,11 @@ class BIN_Metrics():
         metered = tf.logical_and(true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_true = ~ tf.math.logical_xor(true , pred)
-        all_true = tf.cast(all_true , tf.float16)
+        all_true = tf.reduce_sum(y_true)
 
         true_pos_count = tf.reduce_sum(metered)
-        all_count = tf.reduce_sum(all_true)
 
-        return tf.math.divide_no_nan(true_pos_count , all_count)
+        return tf.math.divide_no_nan(true_pos_count , all_true)
 
                 
 
@@ -50,13 +48,11 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , ~pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_true = ~ tf.math.logical_xor(true , pred)
-        all_true = tf.cast(all_true , tf.float16)
+        all_true = tf.math.logical_xor(y_true)
 
         true_neg_count = tf.reduce_sum(metered)
-        all_count = tf.reduce_sum(all_true)
 
-        return tf.math.divide_no_nan(true_neg_count , all_count)
+        return tf.math.divide_no_nan(true_neg_count , all_true)
 
 
 
@@ -73,13 +69,11 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_false = tf.math.logical_xor(true , pred)
-        all_false = tf.cast(all_false , tf.float16)
+        all_false = tf.reduce_sum( -1 * y_true - 1 )
 
         false_pos_count = tf.reduce_sum(metered)
-        all_count = tf.reduce_sum(all_false)
 
-        return tf.math.divide_no_nan(false_pos_count , all_count)
+        return tf.math.divide_no_nan(false_pos_count , all_false)
 
 
         
@@ -96,14 +90,12 @@ class BIN_Metrics():
         metered = tf.logical_and(true , ~pred)
         metered = tf.cast(metered , tf.float16)
         
-        all_false = tf.math.logical_xor(true , pred)
-        all_false = tf.cast(all_false , tf.float16)
+        all_false = tf.reduce_sum( -1 * y_true - 1 )
 
         false_neg_count = tf.reduce_sum(metered)
-        all_count = tf.reduce_sum(all_false)
        
 
-        return tf.math.divide_no_nan(false_neg_count , all_count)
+        return tf.math.divide_no_nan(false_neg_count , all_false)
         
 
 
