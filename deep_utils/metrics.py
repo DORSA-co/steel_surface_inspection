@@ -135,7 +135,7 @@ model.compile(
 model.fit(data_, label_, epochs=10, batch_size=1)
 
 yt = [[0, 0, 0, 0],[1,1,0,0],[0,  0,0,  0],[1,   0,0,1]]
-yp = [[1, 1, 0, 1],[0,1,0,0],[0.9,0,0.2,0],[0.88,0,0,0]]
+yp = [[1, 1, 0, 1],[0,1,0,0],[1,0,0,0],[0.88,0,0,0]]
 yt = tf.constant(yt)
 yp = tf.constant(yp)
 
