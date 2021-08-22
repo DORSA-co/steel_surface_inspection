@@ -125,16 +125,16 @@ if __name__ == "__main__":
 
     
     
-    aug = augmention.augmention(shift_range=(-50, 50),
+    aug = augmention.augmention(shift_range=(-100, 100),
                     rotation_range=(-10,10),
                     zoom_range=(0.9,1.1),
                     shear_range=(-0.05,0.05),
                     hflip=True, 
                     wflip = True, 
                     color_filter=True,
-                    chance=0.3  )
+                    chance=0.5  )
 
-    featurs_extractor = [ Features.get_hog(bin_n=25, split_h=2, split_w=4),]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
+    featurs_extractor = [ Features.get_hog(bin_n=25, split_h=2, split_w=4), Features.get_hoc(bin_n=25, split_h=2, split_w=4)]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
     if model_developer.output_type == ModelDeveloper.BINARY:
         extractor_func = DataReader.extact_binary()
 
@@ -145,6 +145,8 @@ if __name__ == "__main__":
     annonations_name = DataReader.get_annonations_name(train_config.get_lbls_path())
 
     trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=train_config.get_validation_split())
+
+    print('training on {} data and validation on {} data'.format(len(trains_list), len(val_list)))
     
 
     #statisticsDataset.binary_hist(train_config.get_lbls_path(), trains_list)
@@ -174,8 +176,8 @@ if __name__ == "__main__":
                 validation_data=val_gen,
                 batch_size=train_config.get_batch_size(),
                 epochs = train_config.get_epochs(),
-                steps_per_epoch = len(trains_list)//train_config.get_epochs(),
-                validation_steps = len(val_list)//train_config.get_epochs()
+                steps_per_epoch = len(trains_list)//train_config.get_batch_size(),
+                validation_steps = len(val_list)//train_config.get_batch_size()
                 )
     
 

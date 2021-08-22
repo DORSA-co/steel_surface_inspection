@@ -43,7 +43,8 @@ def get_hog(bin_n = 24, split_h=2,split_w=2):
             
         hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
         hist = np.hstack(hists) #hist is a 64 bit vector
-        #hist = hist.astype(np.float32) / ( (h//split) * (w//split)  )
+        #hist = hist.astype(np.float32) / ( (h//split_h) * (w//split_w) )
+        #hist = hist / 10
         hist = hist - hist.mean()
         hist = hist / hist.std()
         return hist

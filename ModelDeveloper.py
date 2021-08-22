@@ -111,7 +111,7 @@ class ModelBuilder():
     def simple_dense2dense(self ,  input_shape , output_neuron, output_type ):
         model = keras.Sequential()
         model.add( keras.layers.Input(shape = input_shape) )
-        model.add( keras.layers.Dense(256 , activation='relu')) #or 64 and 64 as units
+        model.add( keras.layers.Dense(512 , activation='relu')) #or 64 and 64 as units
         model.add( keras.layers.Dense(128 , activation='relu'))
         model.add( keras.layers.Dense(output_neuron , activation=output_type))
 
