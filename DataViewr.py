@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import sys
 
 from numpy.lib.function_base import percentile
+from tensorflow.python.keras.backend import print_tensor
 import DataReader
 import numpy as np
 
@@ -222,6 +223,166 @@ class Viewer():
 
 
 
+'''
+#______________________________________________________________________________________________________________________________________________
+#explain:
+#   show Dataset. Just instance an object and it will show images and labels
+#
+#arg:
+#   gen: generator function ( from DataReader.py)
+#
+#return:
+#   plot Dataset  automaticly in proper view
+#______________________________________________________________________________________________________________________________________________
+class ViewerByModel():
+
+    def __init__(self, gen, model, th=0.5):
+        self.gen = gen
+        self.model = model
+        self.th = th
+        self.batch_img = None
+        self.batch_lbl = None
+        self.batch_pred = None
+        self.batch_size = None
+        self.idx = -1
+        self.fig = plt.figure()
+        self.fig.canvas.mpl_connect('key_press_event', self.on_press)
+        plt.show()
+    
+
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   keabord press Event. DONT NEED CALL THIS FUNCTION
+    #
+    #arg:
+    #   event: it obtain when pressed a key on keyboard
+    #
+    #______________________________________________________________________________________________________________________________________________
+    def on_press(self, event):
+        print('press', event.key)
+        
+        sys.stdout.flush()
+        if event.key =='escape':
+            plt.close()
+            return None
+        
+        img,lbl = None, None
+        if event.key == 'left':
+            img, lbl, pred = self.sample('back')
+
+        elif event.key == 'right':
+            img, lbl, pred = self.sample('next')
+        
+        if lbl is not None and len(lbl.shape)==0: #binary Labe shape is ()
+            self.binary(img,lbl,pred)
+        
+        #elif lbl is not None and len(lbl.shape)==1: #class Label shape is (n,)
+        #    self.classification(img,lbl)
+
+        #elif lbl is not None and len(lbl.shape)>1: #class Label shape is (n, h,w)
+        #    self.mask(img,lbl)
+            
+            
+        
+        
+
+    
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   function for plot an image and binary label
+    #
+    #arg:
+    #   img: numpy array of image in BGR format
+    #   lbl: binary label that is a numpy number ( 0 or 1)
+    #______________________________________________________________________________________________________________________________________________
+    def binary(self, img, lbl, pred):
+        H = 100
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        h,w = img.shape[:2]
+        lbl_img = np.zeros((H,w,3), dtype=np.uint8)
+        
+
+        if lbl==1:
+            lbl_img[:H//2-5,:,1] = 255
+            cv2.putText( lbl_img, "Have Object", ( int(w*0.44), H//4), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,0,0))
+        else:
+            lbl_img[:H//2-5,:,2] = 255
+            cv2.putText( lbl_img, "No Object", ( int(w*0.45), H//4), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255,255,255))
+
+
+        if pred==1:
+            lbl_img[H//2+5:,:,1] = 255
+            cv2.putText( lbl_img, "Have Object-Model", ( int(w*0.44), H*3//4), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0,0,0))
+        else:
+            lbl_img[H//2+5:,:,2] = 255
+            cv2.putText( lbl_img, "No Object-Model", ( int(w*0.45), H*3//4), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255,255,255))
+        
+        lbl_img = cv2.cvtColor(lbl_img, cv2.COLOR_BGR2RGB)
+
+
+        ax = self.fig.add_axes([0.025, 0.25, 0.95, 0.5])
+        ax.imshow(img)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax = self.fig.add_axes([0.025, 0.2, 0.95, 0.2])
+        ax.imshow(lbl_img)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.show()
+
+
+    
+    #______________________________________________________________________________________________________________________________________________
+    #explain:
+    #   sample an data row (img,lbl) from generator
+    #
+    #arg:
+    #   state: if state=='next' returned the next data row. else if state=='back' it returned perivous data row
+    #______________________________________________________________________________________________________________________________________________
+    def sample(self, state ):
+        print('*'*100, self.idx)
+        if state =='next':
+            self.idx+=1
+        elif state == 'back':
+            self.idx-=1
+
+        if self.batch_img is None:
+            self.batch_img, self.batch_lbl = next( self.gen )
+            self.batch_pred = self.model.predict( self.batch_img )
+            self.batch_pred = np.floor((np.sign(self.batch_pred - self.th ) + 1) / 2) #quntize to 0 and 1
+            self.batch_size = len( self.batch_img )
+            self.idx = 0
+
+
+        if self.idx > self.batch_size - 1:
+            self.batch_img, self.batch_lbl = next( self.gen )
+            self.batch_pred = self.model.predict( self.batch_img )
+            self.batch_pred = np.floor((np.sign(self.batch_pred - self.th ) + 1) / 2) #quntize to 0 and 1
+            self.idx = 0
+        
+        elif self.idx < 0:
+            self.idx = 0
+
+        img = self.batch_img[ self.idx ]
+        lbl = self.batch_lbl[ self.idx ]
+        pred = self.batch_pred[self.idx]
+        img = (img * (255/img.max()) ).clip(0,255)
+        img = (img).astype(np.uint8)
+        #if lbl is mask
+        if len(lbl.shape) > 2:
+            lbl *= 255
+            lbl = lbl.astype(np.uint8)
+            lbl = np.moveaxis(lbl, [0,1,2],[1,2,0]) #from (h,w,channel) to (channel,h,w)
+
+            pred *= 255
+            pred = pred.astype(np.uint8)
+            pred = np.moveaxis(pred, [0,1,2],[1,2,0]) #from (h,w,channel) to (channel,h,w)
+
+
+
+        return img, lbl, pred
+
+'''
 
 
 if __name__ == '__main__':

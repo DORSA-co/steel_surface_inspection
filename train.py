@@ -166,6 +166,7 @@ if __name__ == "__main__":
                                 )
     
     model.load_weights( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
+    
     model.fit(  train_gen,
                 validation_data=val_gen,
                 batch_size=train_config.get_batch_size(),
@@ -173,7 +174,21 @@ if __name__ == "__main__":
                 steps_per_epoch = len(trains_list)//train_config.get_epochs(),
                 validation_steps = len(val_list)//train_config.get_epochs()
                 )
+    
 
-    model.save( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
+    #model.save( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
     
-    
+
+
+    '''
+    train_gen = DataReader.generator( train_config.get_lbls_path(),
+                                extractor_func,
+                                annonations_name=trains_list,
+                                batch_size=train_config.get_batch_size(),
+                                aug=None,
+                                rescale=255, resize=(128,800),
+                                featurs_extractor=None
+                                )
+
+    DataViewr.ViewerByModel(train_gen, model, th=0.5)
+    '''
