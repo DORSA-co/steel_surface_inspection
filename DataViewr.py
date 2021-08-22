@@ -1,4 +1,3 @@
-from statistics import binary_hist
 import cv2
 from matplotlib import pyplot as plt
 import sys
