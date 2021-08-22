@@ -24,11 +24,14 @@ class BIN_Metrics():
         metered = tf.logical_and(true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_true = tf.reduce_sum(y_true)
+        all_pos = tf.cast(
+            tf.reduce_sum(y_true),
+            dtype=tf.float16
+        )
 
         true_pos_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(true_pos_count , all_true)
+        return tf.math.divide_no_nan(true_pos_count , all_pos)
 
                 
 
@@ -48,11 +51,14 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , ~pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_true = tf.math.logical_xor(y_true)
+        all_neg = tf.cast(
+            tf.reduce_sum( -1 * y_true - 1 ),
+            dtype=tf.float16
+        )
 
         true_neg_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(true_neg_count , all_true)
+        return tf.math.divide_no_nan(true_neg_count , all_neg)
 
 
 
@@ -69,11 +75,14 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_false = tf.reduce_sum( -1 * y_true - 1 )
+        all_true = tf.cast( 
+            tf.reduce_sum(y_true),
+            dtype=tf.float16
+        )
 
         false_pos_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(false_pos_count , all_false)
+        return tf.math.divide_no_nan(false_pos_count , all_true)
 
 
         
@@ -90,12 +99,15 @@ class BIN_Metrics():
         metered = tf.logical_and(true , ~pred)
         metered = tf.cast(metered , tf.float16)
         
-        all_false = tf.reduce_sum( -1 * y_true - 1 )
+        all_neg = tf.cast(
+            tf.reduce_sum( -1 * y_true - 1 ),
+            dtype=tf.float16
+        )
 
         false_neg_count = tf.reduce_sum(metered)
        
 
-        return tf.math.divide_no_nan(false_neg_count , all_false)
+        return tf.math.divide_no_nan(false_neg_count , all_neg)
         
 
 
@@ -120,23 +132,24 @@ model.compile(
         BIN_Metrics(0.7).True_Neg ,
         BIN_Metrics(0.7).True_Pos ,
         ])
-'''
 
-
-'''
 model.fit(data_, label_, epochs=10, batch_size=1)
-
-yt = [[0, 0, 0, 0],[1,1,0,0],[0,  0,0,  0],[1,   0,0,1]]
-yp = [[1, 1, 0, 1],[0,1,0,0],[0.9,0,0.2,0],[0.88,0,0,0]]
-yt = tf.constant(yt)
-yp = tf.constant(yp)
-
-binm = BIN_Metrics()
-print(binm.False_Neg( yt , yp))
-print(binm.False_Pos(yt , yp))
-print(binm.True_Neg(yt , yp))
-print(binm.True_Pos(yt , yp))
 '''
+
+
+
+
+# yt = [[0, 0, 0, 0],[1,1,0,0],[0,  0,0,  0],[1,   0,0,1]]
+# yp = [[1, 1, 0, 1],[0,1,0,0],[0.9,0,0.2,0],[0.88,0,0,0]]
+# yt = tf.constant(yt)
+# yp = tf.constant(yp)
+
+# binm = BIN_Metrics()
+# print(binm.False_Neg( yt , yp))
+# print(binm.False_Pos(yt , yp))
+# print(binm.True_Neg(yt , yp))
+# print(binm.True_Pos(yt , yp))
+
 
 
 
