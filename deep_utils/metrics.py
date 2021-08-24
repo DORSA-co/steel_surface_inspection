@@ -121,7 +121,7 @@ class BIN_Metrics():
         tp = self.True_Pos(y_true , y_pred)
         fn = self.False_Neg(y_true , y_pred)
 
-        return tp / (tp + fn)
+        return tf.math.divide_no_nan(tp , (tp + fn) )
 
 
 
@@ -136,8 +136,8 @@ class BIN_Metrics():
         tp = self.True_Pos(y_true , y_pred)
         fp = self.False_Pos(y_true , y_pred)
 
-        return tp / (tp + fp)
-        
+        return tf.math.divide_no_nan(tp, (tp + fp) )
+
     
     def specificity(self, y_true , y_pred):
 
