@@ -45,6 +45,7 @@ class ModelBuilder():
         if path is not None:
             self.__json = self.__read__(path)
 
+        self.model_type = self.__json['output-type']
     
     #______________________________________________________________________________________________________________________________________________
     #explain:
