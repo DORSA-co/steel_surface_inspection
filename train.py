@@ -117,7 +117,7 @@ if __name__ == "__main__":
     binary_metrics = metrics.BIN_Metrics()
     model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
     model = model_developer.build()
-    model.compile( keras.optimizers.RMSprop( learning_rate= train_config.get_learning_rate ), 
+    model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), 
                    loss = __loss_dict__[ model_developer.output_type ],
                    metrics=['acc', binary_metrics.True_Pos, binary_metrics.True_Neg, binary_metrics.False_Pos, binary_metrics.False_Neg] )
     model.summary()
@@ -157,8 +157,8 @@ if __name__ == "__main__":
                                 annonations_name=trains_list,
                                 batch_size=train_config.get_batch_size(),
                                 aug = aug,
-                                rescale=255, resize=(120,800),
-                                featurs_extractor=featurs_extractor
+                                rescale=255, resize=(300,300),
+                                featurs_extractor=None
                                 )
     
     val_gen = DataReader.generator( train_config.get_lbls_path(),
@@ -166,22 +166,22 @@ if __name__ == "__main__":
                                 annonations_name=val_list,
                                 batch_size=train_config.get_batch_size(),
                                 aug=None,
-                                rescale=255, resize=(128,800),
-                                featurs_extractor=featurs_extractor
+                                rescale=255, resize=(300,300),
+                                featurs_extractor=None
                                 )
     
-    model.load_weights( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
-    
+    model.load_weights( os.path.join( train_config.get_out_path(), 'MODEL_c2d_binary_classification.h5' ))
     model.fit(  train_gen,
                 validation_data=val_gen,
                 batch_size=train_config.get_batch_size(),
                 epochs = train_config.get_epochs(),
-                steps_per_epoch = len(trains_list)//train_config.get_batch_size(),
-                validation_steps = len(val_list)//train_config.get_batch_size()
+                steps_per_epoch = len(trains_list)//train_config.get_batch_size()+1,
+                validation_steps = len(val_list)//train_config.get_batch_size(),
+                validation_batch_size = train_config.get_batch_size()
                 )
     
 
-    model.save( os.path.join( train_config.get_out_path(), 'MODEL_binary_classification.h5' ))
+    model.save( os.path.join( train_config.get_out_path(), 'MODEL_c2d_binary_classification.h5' ))
     
 
 

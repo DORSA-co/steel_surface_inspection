@@ -3,8 +3,8 @@
     "train-label-path":"severstal-steel-defect-detection/annotations",
 	"class-num":1,
 
-    "epochs": 5,
-    "batch-size" :32,
+    "epochs": 15,
+    "batch-size" :8,
     "learning-rate": 0.001,
     "validation-split" : 0.2,
 
