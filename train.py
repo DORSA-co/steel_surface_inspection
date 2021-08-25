@@ -12,6 +12,7 @@ import os
 import statisticsDataset
 import numpy as np
 from deep_utils import metrics
+from deep_utils import callbacks
 np.seterr(divide='ignore', invalid='ignore')
 
 #______________________________________________________________________________________________________________________________________
@@ -115,17 +116,20 @@ if __name__ == "__main__":
     train_config = trainConfig(path)
 
     binary_metrics = metrics.BIN_Metrics()
+    callback = callbacks.CustomCallback(os.path.join( train_config.get_out_path(), 'test.h5' ))
     model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
     model = model_developer.build()
     model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), 
                    loss = __loss_dict__[ model_developer.output_type ],
-                   metrics=['acc', binary_metrics.True_Pos, binary_metrics.True_Neg, binary_metrics.False_Pos, binary_metrics.False_Neg] )
+                   metrics=['acc', binary_metrics.precision, binary_metrics.recall, binary_metrics.specificity] ,
+                   )
+
     model.summary()
     print(model.input_shape)
 
     
     
-    aug = augmention.augmention(shift_range=(-100, 100),
+    aug = augmention.augmention(shift_range=(-50, 50),
                     rotation_range=(-10,10),
                     zoom_range=(0.9,1.1),
                     shear_range=(-0.05,0.05),
@@ -156,7 +160,7 @@ if __name__ == "__main__":
                                 extractor_func,
                                 annonations_name=trains_list,
                                 batch_size=train_config.get_batch_size(),
-                                aug = aug,
+                                aug =  aug,
                                 rescale=255, resize=(300,300),
                                 featurs_extractor=None
                                 )
@@ -170,18 +174,21 @@ if __name__ == "__main__":
                                 featurs_extractor=None
                                 )
     
-    model.load_weights( os.path.join( train_config.get_out_path(), 'MODEL_c2d_binary_classification.h5' ))
+    
+    #model.load_weights( os.path.join( train_config.get_out_path(), 'test.h5' ))
     model.fit(  train_gen,
                 validation_data=val_gen,
                 batch_size=train_config.get_batch_size(),
                 epochs = train_config.get_epochs(),
                 steps_per_epoch = len(trains_list)//train_config.get_batch_size()+1,
                 validation_steps = len(val_list)//train_config.get_batch_size(),
-                validation_batch_size = train_config.get_batch_size()
+                validation_batch_size = train_config.get_batch_size(),
+                callbacks = [callback] 
+
                 )
     
 
-    model.save( os.path.join( train_config.get_out_path(), 'MODEL_c2d_binary_classification.h5' ))
+    model.save( os.path.join( train_config.get_out_path(), 'test.h5' ))
     
 
 

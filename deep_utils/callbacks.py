@@ -4,7 +4,7 @@ import os
 class CustomCallback(keras.callbacks.Callback):
     
     def __init__(self,out_path):
-        super.__init__(self)
+        #super.__init__(self)
         self.out_path = out_path
 
     def on_epoch_end(self, epoch, logs=None):

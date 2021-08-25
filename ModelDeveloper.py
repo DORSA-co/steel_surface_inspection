@@ -170,23 +170,26 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_cnn2dense(self, input_shape , output_neuron , output_type ):
-        '''
+        
         model = keras.Sequential()
         model.add( keras.layers.Input(shape=input_shape))
         model.add( keras.layers.Conv2D(16, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
         model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
+        model.add( keras.layers.Conv2D(16, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
+        model.add( keras.layers.Conv2D(16, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
+        model.add( keras.layers.Conv2D(16, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
         model.add( keras.layers.Conv2D(32, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
         model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(128, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+        model.add( keras.layers.Conv2D(32, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
         #model.add( keras.layers.Conv2D(64, kernel_size=(1,1), strides=(1,1), padding='valid', activation='relu'))
         model.add( keras.layers.Flatten())
+        model.add( keras.layers.Dense(256 , activation='relu'))
         model.add( keras.layers.Dense(output_neuron, activation=output_type))
+        
         '''
-
         #resnet = keras.applications.InceptionResNetV2(include_top=False, input_shape=tuple(input_shape))
         resnet = keras.applications.ResNet50V2(include_top=False, input_shape=tuple(input_shape))
         resnet.trainable = False
@@ -196,6 +199,7 @@ class ModelBuilder():
         x = keras.layers.Dense(64 , activation='relu')(x)
         out = keras.layers.Dense(output_neuron, activation=output_type)(x)
         model = keras.Model(resnet.input, out)
+        '''
 
         return model
 
