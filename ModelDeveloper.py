@@ -44,8 +44,6 @@ class ModelBuilder():
     def __init__(self , path = None):
         if path is not None:
             self.__json = self.__read__(path)
-
-        self.model_type = self.__json['output-type']
     
     #______________________________________________________________________________________________________________________________________________
     #explain:
@@ -79,21 +77,21 @@ class ModelBuilder():
         }
 
         assert self.__json['model-type'] in generator_dict.keys() , 'Model Type Not Valid!'
-        model_type = self.__json['model-type']
-        generator = generator_dict[model_type]
+        self.model_type = self.__json['model-type']
+        generator = generator_dict[self.model_type]
 
 
         assert self.__json['output-type'] in output_type_dict.keys() , 'Model\'s output type is Not Valid!'
-        output_type_val = self.__json['output-type']
-        self.output_type = output_type_dict[output_type_val]
+        self.output_type = self.__json['output-type']
+        self.__output_type = output_type_dict[self.output_type]
         
-        input_shape = np.array(
+        self.input_shape = np.array(
             self.__json['input-dimension']
         )
 
-        output_neuron = int( self.__json['output-neuron_count'] )
+        self.output_neuron = int( self.__json['output-neuron_count'] )
 
-        return generator(input_shape , output_neuron , self.output_type)
+        return generator(self.input_shape , self.output_neuron , self.__output_type)
 
 
     
@@ -114,6 +112,7 @@ class ModelBuilder():
         model.add( keras.layers.Input(shape = input_shape) )
         model.add( keras.layers.Dense(512 , activation='relu')) #or 64 and 64 as units
         model.add( keras.layers.Dense(128 , activation='relu'))
+        print(output_neuron)
         model.add( keras.layers.Dense(output_neuron , activation=output_type))
 
         return model
@@ -183,6 +182,6 @@ if __name__ == '__main__':
     print('start')
     # model_builder = ModelBuilder()
     # model = model_builder.simple_cnn2dense( (300,300,3), 30, BINARY )
-    model_builder = ModelBuilder(r'model_config\config-test.json')
+    model_builder = ModelBuilder(r'configs\config-model.json')
     model = model_builder.build()
     model.summary()

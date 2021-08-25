@@ -24,14 +24,14 @@ class BIN_Metrics():
         metered = tf.logical_and(true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_pos = tf.cast(
-            tf.reduce_sum(y_true),
+        all_ = tf.cast( 
+            tf.reduce_sum(y_true) + tf.reduce_sum(1 - y_true),
             dtype=tf.float16
         )
 
         true_pos_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(true_pos_count , all_pos)
+        return tf.math.divide_no_nan(true_pos_count , all_)
 
                 
 
@@ -51,14 +51,14 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , ~pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_neg = tf.cast(
-            tf.reduce_sum( 1 - y_true ),
+        all_ = tf.cast( 
+            tf.reduce_sum(y_true) + tf.reduce_sum(1 - y_true),
             dtype=tf.float16
         )
 
         true_neg_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(true_neg_count , all_neg)
+        return tf.math.divide_no_nan(true_neg_count , all_)
 
 
 
@@ -75,14 +75,14 @@ class BIN_Metrics():
         metered = tf.logical_and(~true , pred)
         metered = tf.cast(metered , tf.float16)
 
-        all_true = tf.cast( 
-            tf.reduce_sum(y_true),
+        all_ = tf.cast( 
+            tf.reduce_sum(y_true) + tf.reduce_sum(1 - y_true),
             dtype=tf.float16
         )
 
         false_pos_count = tf.reduce_sum(metered)
 
-        return tf.math.divide_no_nan(false_pos_count , all_true)
+        return tf.math.divide_no_nan(false_pos_count , all_)
 
 
         
@@ -99,17 +99,66 @@ class BIN_Metrics():
         metered = tf.logical_and(true , ~pred)
         metered = tf.cast(metered , tf.float16)
         
-        all_neg = tf.cast(
-            tf.reduce_sum( 1 - y_true ),
+        all_ = tf.cast( 
+            tf.reduce_sum(y_true) + tf.reduce_sum(1 - y_true),
             dtype=tf.float16
         )
 
         false_neg_count = tf.reduce_sum(metered)
        
 
-        return tf.math.divide_no_nan(false_neg_count , all_neg)
+        return tf.math.divide_no_nan(false_neg_count , all_)
         
 
+    def recall(self , y_true , y_pred):
+        pred = tf.math.floor(
+            (tf.math.sign( y_pred - self.__threshold ) + 1) / 2
+        )
+
+        true = tf.cast(y_true , tf.bool)
+        pred = tf.cast(pred , tf.bool)
+
+        tp = self.True_Pos(y_true , y_pred)
+        fn = self.False_Neg(y_true , y_pred)
+
+        return tf.math.divide_no_nan(tp , (tp + fn) )
+
+
+
+    def precision(self , y_true , y_pred):
+        pred = tf.math.floor(
+            (tf.math.sign( y_pred - self.__threshold ) + 1) / 2
+        )
+
+        true = tf.cast(y_true , tf.bool)
+        pred = tf.cast(pred , tf.bool)
+
+        tp = self.True_Pos(y_true , y_pred)
+        fp = self.False_Pos(y_true , y_pred)
+
+        return tf.math.divide_no_nan(tp, (tp + fp) )
+
+    
+    def specificity(self, y_true , y_pred):
+
+        pred = tf.math.floor(
+            (tf.math.sign( y_pred - self.__threshold ) + 1) / 2
+        )
+
+        true = tf.cast(y_true , tf.bool)
+        pred = tf.cast(pred , tf.bool)
+
+        metered = tf.logical_and(~true , ~pred)
+        metered = tf.cast(metered , tf.float16)
+
+        all_ = tf.cast( 
+            tf.reduce_sum(1 - y_true),
+            dtype=tf.float16
+        )
+
+        true_neg_count = tf.reduce_sum(metered)
+
+        return tf.math.divide_no_nan(true_neg_count , all_)       
 
 '''
 data_ = np.random.rand( 100, 8 )
