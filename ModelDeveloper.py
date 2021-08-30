@@ -108,11 +108,26 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_dense2dense(self ,  input_shape , output_neuron, output_type ):
+
         model = keras.Sequential()
         model.add( keras.layers.Input(shape = input_shape) )
-        model.add( keras.layers.Dense(512 , activation='relu')) #or 64 and 64 as units
-        model.add( keras.layers.Dense(128 , activation='relu'))
-        print(output_neuron)
+        
+        model.add( keras.layers.Dense(256 , activation=None)) #or 64 and 64 as units
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+
+        model.add( keras.layers.Dense(512 , activation=None)) #or 64 and 64 as units
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+
+        model.add( keras.layers.Dense(128 , activation=None))
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+
+        model.add( keras.layers.Dense(64 , activation=None))
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+
         model.add( keras.layers.Dense(output_neuron , activation=output_type))
 
         return model
@@ -131,20 +146,77 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_cnn2cnn( self, input_shape , output_neuron , output_type ):
-        model = keras.Sequential()
-        model.add( keras.layers.Input(shape=input_shape))
-        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(2,2), padding='valid', activation='relu'))
+        '''
+        inputs = keras.layers.Input(input_shape)
+        conv1 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
+        conv1 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
+        pool1 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv1)
+        conv2 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
+        conv2 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
+        pool2 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
+        conv3 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
+        conv3 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3)
+        pool3 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv3)
+        conv4 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
+        conv4 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
+        drop4 = keras.layers.Dropout(0.5)(conv4)
+        pool4 = keras.layers.MaxPooling2D(pool_size=(2, 2))(drop4)
+        conv5 = keras.layers.Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
+        conv5 = keras.layers.Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
+        drop5 = keras.layers.Dropout(0.5)(conv5)
+        up6 = keras.layers.Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(drop5))
+        merge6 = keras.layers.concatenate([drop4,up6], axis = 3)
+        conv6 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
+        conv6 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
+        up7 = keras.layers.Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv6))
+        merge7 = keras.layers.concatenate([conv3,up7], axis = 3)
+        conv7 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
+        conv7 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
+        up8 = keras.layers.Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv7))
+        merge8 = keras.layers.concatenate([conv2,up8], axis = 3)
+        conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
+        conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
+        up9 = keras.layers.Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv8))
+        merge9 = keras.layers.concatenate([conv1,up9], axis = 3)
+        conv9 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
+        conv9 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+        conv9 = keras.layers.Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
+        conv10 = keras.layers.Conv2D(1, 1, activation = 'sigmoid')(conv9)
+        model = keras.Model(inputs,  conv10)
+        '''
 
-        model.add( keras.layers.Conv2D(128, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(512, kernel_size=(3,3), strides=(1,1), padding='same', activation='relu'))
-        model.add( keras.layers.Conv2D(output_neuron, (3,3), padding='same', activation=output_type))
+        inputs = keras.layers.Input(input_shape)
+        conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
+        conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
+        pool1 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv1)
+        conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
+        conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
+        pool2 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
+        conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
+        conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3)
 
+        pool3 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv3)
+        conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
+        conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
+        drop4 = keras.layers.Dropout(0.5)(conv4)
+        pool4 = keras.layers.MaxPooling2D(pool_size=(2, 2))(drop4)
+
+        conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
+        conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
+        drop5 = keras.layers.Dropout(0.5)(conv5)
+
+        up6 = keras.layers.Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(drop5))
+        merge6 = keras.layers.concatenate([drop4,up6], axis = 3)
+        conv6 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
+        conv6 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
+
+        up7 = keras.layers.Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv6))
+        merge7 = keras.layers.concatenate([conv3,up7], axis = 3)
+        conv7 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
+        conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
+        out = keras.layers.Conv2D(output_neuron, 3, activation = output_type, padding = 'same', kernel_initializer = 'he_normal')(conv8)
+
+        model = keras.Model(inputs,  out)
         return model
 
 
@@ -161,19 +233,27 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_cnn2dense(self, input_shape , output_neuron , output_type ):
+
         model = keras.Sequential()
         model.add( keras.layers.Input(shape=input_shape))
-        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(2,2), padding='valid', activation='relu'))
 
-        model.add( keras.layers.Conv2D(128, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+        model.add( keras.layers.Conv2D(64, kernel_size=(3,3), strides=(1,1), padding='valid', activation=None))
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+        model.add( keras.layers.AveragePooling2D( pool_size=(2,2)))
+
+        model.add( keras.layers.Conv2D(64, kernel_size=(7,7), strides=(7,7), padding='valid', activation=None))
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
+
+        model.add( keras.layers.Conv2D(512, kernel_size=(3,3), strides=(1,1), padding='valid', activation=None))
+        model.add( keras.layers.BatchNormalization())
+        model.add( keras.layers.ReLU())
         model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(256, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
-        model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
-        model.add( keras.layers.Conv2D(512, kernel_size=(3,3), strides=(1,1), padding='valid', activation='relu'))
+
         model.add( keras.layers.GlobalAvgPool2D())
+        model.add( keras.layers.Dense(128 , activation='relu'))
+        model.add( keras.layers.Dense(64 , activation='relu'))
         model.add( keras.layers.Dense(output_neuron, activation=output_type))
         return model
 
