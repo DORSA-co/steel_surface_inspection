@@ -111,7 +111,7 @@ class ModelBuilder():
 
         model = keras.Sequential()
         model.add( keras.layers.Input(shape = input_shape) )
-        
+
         model.add( keras.layers.Dense(256 , activation=None)) #or 64 and 64 as units
         model.add( keras.layers.BatchNormalization())
         model.add( keras.layers.ReLU())
@@ -189,13 +189,15 @@ class ModelBuilder():
         conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
         conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
         pool1 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv1)
+
         conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
         conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
         pool2 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
+
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3)
-
         pool3 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv3)
+        
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
         drop4 = keras.layers.Dropout(0.5)(conv4)

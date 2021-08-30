@@ -30,6 +30,7 @@ else :
 
 
 
+
 class trainConfig():
 
     def __init__(self, path):
@@ -127,11 +128,16 @@ class Preperations():
 
     def prepareData(self, augmentation : augmention , featurs_extractor: list):
         
-        if self.model_developer.output_type == 'bin':
+        if self.model_developer.output_type == 'bin' and ( self.model_developer.model_type in ['c2d', 'd2d']):
             extractor_func = DataReader.extact_binary()
 
-        elif self.model_developer.output_type == 'cls':
+        elif self.model_developer.output_type == 'cls' and ( self.model_developer.model_type in ['c2d', 'd2d']) :
             extractor_func = DataReader.extract_class(self.train_config.get_class_num(), False)
+        
+        elif self.model_developer.model_type in ['c2c']:
+            extractor_func = DataReader.extract_mask( self.train_config.get_class_num(), mask_size=self.model.output_shape[1:-1], consider_no_object=False, class_id=None )
+
+        
 
         annonations_name = DataReader.get_annonations_name(self.train_config.get_lbls_path())
 
@@ -241,6 +247,8 @@ if __name__ == "__main__":
 
     prep.prepareData(augmentation = aug , featurs_extractor = None)
 
+    #viewer = DataViewr.Viewer(prep.train_gen)
+    
     prep.startFitting(load_weights=False)
 
     '''
