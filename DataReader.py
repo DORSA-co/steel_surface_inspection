@@ -439,7 +439,7 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
             else:
                 for mask_obj in mask_objs:
                     msk = cv2.resize(mask_obj.mask , mask_size[::-1] )  #in json file class started ferm numer 1
-                    _,msk = cv2.threshold(msk,100, 255, cv2.THRESH_BINARY)
+                    _,msk = cv2.threshold(msk,180, 255, cv2.THRESH_BINARY)
                     lbl[:,:,mask_obj.class_id] = msk
                      
         
@@ -498,7 +498,6 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
                     
                 else: #Mask 
                     img, lbl = aug.augment_single_byMask(img, lbl)
-                    _,lbl = cv2.threshold(lbl, 125, 255, cv2.THRESH_BINARY)
                     
             
             if resize is not None:
