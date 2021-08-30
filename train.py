@@ -126,7 +126,7 @@ class Preperations():
 
 
 
-    def prepareData(self, augmentation : augmention , featurs_extractor: list):
+    def prepareData(self, augmentation : augmention , featurs_extractor: list, filter_args=None):
         
         if self.model_developer.output_type == 'bin' and ( self.model_developer.model_type in ['c2d', 'd2d']):
             extractor_func = DataReader.extact_binary()
@@ -138,8 +138,10 @@ class Preperations():
             extractor_func = DataReader.extract_mask( self.train_config.get_class_num(), mask_size=self.model.output_shape[1:-1], consider_no_object=False, class_id=None )
 
         
-
-        annonations_name = DataReader.get_annonations_name(self.train_config.get_lbls_path())
+        if filter_args is None:
+            annonations_name = DataReader.get_annonations_name(self.train_config.get_lbls_path())
+        else:
+            annonations_name = DataReader.filter_annonations(self.train_config.get_lbls_path(), filter_args )
 
         trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=self.train_config.get_validation_split())
 
@@ -154,7 +156,7 @@ class Preperations():
                                     extractor_func,
                                     annonations_name=trains_list,
                                     batch_size=self.train_config.get_batch_size(),
-                                    aug = aug,
+                                    aug = augmentation,
                                     rescale=255, resize=(128,800),
                                     featurs_extractor=featurs_extractor
                                     )
@@ -241,15 +243,21 @@ if __name__ == "__main__":
         Features.get_hoc(bin_n=25, split_h=2, split_w=4)
         ]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
 
+    filter_args = {
+                "included_object": ["YES"]
+                }
+
     prep = Preperations(train_config)
 
     prep.prepareModel( optimizer = keras.optimizers.RMSprop, print_summary = True )
 
-    prep.prepareData(augmentation = aug , featurs_extractor = None)
+    prep.prepareData(augmentation = None , featurs_extractor = None, filter_args=filter_args)
 
-    #viewer = DataViewr.Viewer(prep.train_gen)
+    viewer = DataViewr.Viewer(prep.train_gen)
     
     prep.startFitting(load_weights=False)
+
+    
 
     '''
     train_gen = DataReader.generator( train_config.get_lbls_path(),
