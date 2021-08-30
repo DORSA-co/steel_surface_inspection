@@ -130,7 +130,7 @@ if __name__ == "__main__":
     
     
     aug = augmention.augmention(shift_range=(-50, 50),
-                    rotation_range=(-10,10),
+                    rotation_range=(-5,5),
                     zoom_range=(0.9,1.1),
                     shear_range=(-0.05,0.05),
                     hflip=True, 
@@ -138,13 +138,22 @@ if __name__ == "__main__":
                     color_filter=True,
                     chance=0.5  )
 
-    featurs_extractor = [ Features.get_hog(bin_n=25, split_h=2, split_w=4), Features.get_hoc(bin_n=25, split_h=2, split_w=4)]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
+    featurs_extractor = [ 
+        Features.get_hog(bin_n=25, split_h=1, split_w=1),
+        Features.get_hoc(bin_n=25, split_h=1, split_w=1),# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
+        #Features.get_lbp(P=4,R=1,method ='uniform', split_h=2, split_w=4)
+        ]
+    #
+    #CHECK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if model_developer.output_type == ModelDeveloper.BINARY:
         extractor_func = DataReader.extact_binary()
 
     elif model_developer.output_type == ModelDeveloper.CLASSIFICATION:
         extractor_func = DataReader.extract_class(train_config.get_class_num(), False)
-    
+
+
+    #extractor_func = DataReader.extract_mask(train_config.get_class_num(), mask_size = (32,200), consider_no_object=False)
+    #CHECK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     annonations_name = DataReader.get_annonations_name(train_config.get_lbls_path())
 
@@ -156,13 +165,14 @@ if __name__ == "__main__":
     #statisticsDataset.binary_hist(train_config.get_lbls_path(), trains_list)
     #statisticsDataset.binary_hist(train_config.get_lbls_path(), val_list)
 
-    train_gen = DataReader.generator( train_config.get_lbls_path(),
+    train_gen = DataReader.generator(train_config.get_lbls_path(),
                                 extractor_func,
                                 annonations_name=trains_list,
                                 batch_size=train_config.get_batch_size(),
                                 aug =  aug,
-                                rescale=255, resize=(300,300),
-                                featurs_extractor=None
+                                rescale=255,
+                                resize=(128,800),
+                                featurs_extractor=featurs_extractor
                                 )
     
     val_gen = DataReader.generator( train_config.get_lbls_path(),
@@ -170,22 +180,25 @@ if __name__ == "__main__":
                                 annonations_name=val_list,
                                 batch_size=train_config.get_batch_size(),
                                 aug=None,
-                                rescale=255, resize=(300,300),
-                                featurs_extractor=None
+                                rescale=255, resize=(128,800),
+                                featurs_extractor=featurs_extractor
                                 )
     
     
+    #viewer = DataViewr.Viewer(train_gen)
+    
+
     #model.load_weights( os.path.join( train_config.get_out_path(), 'test.h5' ))
     model.fit(  train_gen,
                 validation_data=val_gen,
                 batch_size=train_config.get_batch_size(),
                 epochs = train_config.get_epochs(),
                 steps_per_epoch = len(trains_list)//train_config.get_batch_size()+1,
-                validation_steps = len(val_list)//train_config.get_batch_size(),
+                validation_steps = len(val_list)//train_config.get_batch_size()+1,
                 validation_batch_size = train_config.get_batch_size(),
                 callbacks = [callback] 
 
-                )
+            )
     
 
     model.save( os.path.join( train_config.get_out_path(), 'test.h5' ))

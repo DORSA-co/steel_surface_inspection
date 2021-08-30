@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-#from skimage import feature
+from skimage import feature
 import os
 
 from tensorflow.python.ops.gen_array_ops import split
@@ -80,11 +80,11 @@ def get_hoc(bin_n = 25, split_h=2, split_w=2):
     return extractor
         
 
-#______________________________________________________________________________________________________________________________________________
-#explain:
+# ______________________________________________________________________________________________________________________________________________
+# explain:
 #   get local binary pattern from gray image
 #
-#arg:
+# arg:
 #   image: gray image ( np.array shape=(w,h), dtype = np.uint8)
 #   P: Number of circularly symmetric neighbour set points (quantization of the angular space)
 #	R: Radius of circle (spatial resolution of the operator)
@@ -98,26 +98,31 @@ def get_hoc(bin_n = 25, split_h=2, split_w=2):
 #	‘var’: rotation invariant variance measures of the contrast of local image texture
 ##	which is rotation but not gray scale invariant.
 #
-#return:
+# return:
 #   hist
 #   hist: histogram of LBP
-#______________________________________________________________________________________________________________________________________________
-def get_lbp(image, P, R, method):
-	# compute the Local Binary Pattern representation
-    # of the image, and then use the LBP representation
-    # to build the histogram of patterns
-    lbp = feature.local_binary_pattern(image, P, R, method)
-    bin_max = lbp.max() + 1
-    range_max = lbp.max()
-    hist, _ = np.histogram(lbp.ravel(), density=False, bins=np.arange(0, bin_max), range=(0, range_max))
-    # normalize the histogram
-    # hist = hist.astype("float")
-    # hist /= (hist.sum() + eps)
-    # return the histogram of Local Binary Patterns
-    return hist
+# ______________________________________________________________________________________________________________________________________________
+def get_lbp(P, R, method, split_h=2, split_w=2):
+    def extractor(image):
+        # compute the Local Binary Pattern representation
+        # of the image, and then use the LBP representation
+        # to build the histogram of patterns
+        h,w = image.shape
+        hists = []
+        for i in range(split_h):
+            for j in range(split_w):
+                roi = image[h//split_h*i:h//split_h*(i+1) ,     w//split_w*j:w//split_w*(j+1)] 
 
+                lbp = feature.local_binary_pattern(image, P, R, method)
+                lbp = lbp.astype(int)
+                hist = np.bincount(lbp.ravel(), minlength=lbp.max() + 1)
+                hists.append(hists)
+        hist = np.concatenate(hists)
+        hist = hist - hist.mean()
+        hist = hist / hist.std()
+        return hist
 
-
+    return extractor
 
 
 

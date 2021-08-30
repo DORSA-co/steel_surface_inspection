@@ -277,7 +277,7 @@ class augmention():
                 imgs = self.rotate(imgs, angle)
                 #print('rotate', angle)
 
-            if np.random.rand() < func_chance and self.shift_range is not None:
+            if np.random.rand() < func_chance and self.shear_range is not None:
                 value = np.random.random() * (self.shear_range[1] - self.shear_range[0]) + self.shear_range[0]
                 imgs = self.shear(imgs, value)
                 #print('shear', value)
