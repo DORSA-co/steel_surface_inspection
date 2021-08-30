@@ -109,9 +109,8 @@ def get_lbp(P, R, method):
         # of the image, and then use the LBP representation
         # to build the histogram of patterns
         lbp = feature.local_binary_pattern(image, P, R, method)
-        bin_max = lbp.max() + 1
-        range_max = lbp.max()
-        hist, _ = np.histogram(lbp.ravel(), density=False, bins=np.arange(0, bin_max), range=(0, range_max))
+        lbp = lbp.astype(int)
+        hist = np.bincount(lbp.ravel(), minlength=lbp.max() + 1)
         hist = hist - hist.mean()
         hist = hist / hist.std()
         return hist
