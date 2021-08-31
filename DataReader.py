@@ -13,6 +13,7 @@ import json
 CLASSIFICATION_TYPE = 1
 BINARY_TYPE = 2
 MASK_TYPE = 3
+THRESH= 80
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -438,7 +439,10 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
 
             else:
                 for mask_obj in mask_objs:
-                    lbl[:,:,mask_obj.class_id] = cv2.resize(mask_obj.mask , mask_size[::-1] )  #in json file class started ferm numer 1
+                    msk = cv2.resize(mask_obj.mask , mask_size[::-1] )  #in json file class started ferm numer 1
+                    _,msk = cv2.threshold(msk,THRESH, 255, cv2.THRESH_BINARY)
+                    lbl[:,:,mask_obj.class_id] = msk
+                     
         
         if consider_no_object:
             bg = np.sum( lbl, axis=-1 ).clip(0, 255)
@@ -477,7 +481,7 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
 #   batch_lbls: batch of labels that are ready for train
 #
 #______________________________________________________________________________________________________________________________________________
-def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, resize=None, featurs_extractor=None):
+def generator(annonations_path, extractor_func, annonations_name=None,rescale=255, batch_size = 32, aug = None, resize=None, reshape=None , featurs_extractor=None):
     
     batch_inputs = []
     batch_lbls = []
@@ -500,16 +504,15 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
             if resize is not None:
                 img = cv2.resize(img, resize[::-1])
             
-            
+            if reshape is not None:
+                img = np.reshape(img , reshape)
 
-            
-            batch_lbls.append( lbl )
 
             if featurs_extractor is None:
                 img = img.astype(np.float32) / rescale
                 if len(lbl.shape) > 2:
                     lbl = lbl.astype(np.float32) / rescale
-                batch_inputs.append( img )
+                batch_inputs.append(img)
 
             else :
                 feature_vestor=[]
@@ -522,8 +525,9 @@ def generator(annonations_path, extractor_func, annonations_name=None,rescale=25
                 if len(lbl.shape) > 2:
                     lbl = lbl.astype(np.float32) / rescale
 
-
-
+            
+            batch_lbls.append( lbl )
+            
 
             if len(  batch_inputs) == batch_size:
                 yield np.array(batch_inputs), np.array(batch_lbls)

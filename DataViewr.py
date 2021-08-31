@@ -8,6 +8,8 @@ import DataReader
 import numpy as np
 
 
+
+MASK_THRESH = 80
 #______________________________________________________________________________________________________________________________________________
 #explain:
 #   show Dataset. Just instance an object and it will show images and labels
@@ -167,6 +169,9 @@ class Viewer():
 
         for i in range(num_mask):
             mask = lbl[i]
+            h,w = img.shape[:2]
+            mask = cv2.resize(mask,(w,h))
+            _, mask = cv2.threshold(mask,MASK_THRESH, 255,cv2.THRESH_BINARY)
             mask = cv2.bitwise_and(img,img,mask=mask)
             img_axes[1] -= (h_mask + border )
             img_axes[-1] = h_mask
@@ -393,5 +398,4 @@ if __name__ == '__main__':
     extractor_func3 = DataReader.extract_mask(4, (256,1600), consider_no_object=False)
 
     gen = DataReader.generator( lbls_path, extractor_func3, annonations_name=None, batch_size=32, aug=None, rescale=255)
-
     viewer = Viewer(gen)

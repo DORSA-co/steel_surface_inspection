@@ -13,6 +13,7 @@ import statisticsDataset
 import numpy as np
 from deep_utils import metrics
 from deep_utils import callbacks
+from deep_utils import losses
 np.seterr(divide='ignore', invalid='ignore')
 
 #______________________________________________________________________________________________________________________________________
@@ -27,19 +28,6 @@ if len(gpu)>0:
     print("GPU known")
 else :
     print("GPU unknown")
-
-
-
-
-
-__loss_dict__ = { ModelDeveloper.BINARY: keras.losses.binary_crossentropy,
-            ModelDeveloper.CLASSIFICATION: keras.losses.categorical_crossentropy,
-            ModelDeveloper.REGRESSION: keras.losses.mse,
-            ModelDeveloper.POSETIVE_REGRESSION: keras.losses.mse,
-            ModelDeveloper.NORMAL_REGRESSION: keras.losses.mse
-
-        }
-
 
 
 
@@ -98,9 +86,147 @@ class trainConfig():
     
     
     
-
+class Preperations():
     
 
+    def __init__(self, train_config: trainConfig):
+        self.train_config = train_config
+
+        self.model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
+
+        self.__loss_dict__ = { 
+                'bin': keras.losses.binary_crossentropy,
+                'cls': keras.losses.categorical_crossentropy,
+                'reg': keras.losses.mse,
+            }
+        
+    def prepareModel(
+                    self,
+                    optimizer : keras.optimizers.Optimizer,
+                    print_summary = True
+                    ):
+
+        self.model = self.model_developer.build()
+
+        if self.model_developer.output_type == 'cls' and ( self.model_developer.model_type in ['c2d', 'd2d']):
+            metric = self.__getClsMetrics()
+
+        elif self.model_developer.output_type == 'bin'and ( self.model_developer.model_type in ['c2d', 'd2d']):
+            metric = self.__getBinMetrics()
+        
+        elif self.model_developer.model_type in ['c2d', 'c2c']:
+            metric = self.__getMaskMetrics()
+
+        self.model.compile(
+            optimizer(learning_rate= self.train_config.get_learning_rate),
+            loss = self.__loss_dict__[ self.model_developer.output_type ],
+            #loss = losses.mask_binary_weight([0.005, 0.005, 0.005, 0.005]),
+            metrics = metric
+        )
+
+        if print_summary:
+            self.model.summary()
+            print(self.model.input_shape)
+
+
+
+
+    def prepareData(self, augmentation : augmention , featurs_extractor: list, filter_args=None):
+        
+        if self.model_developer.output_type == 'bin' and ( self.model_developer.model_type in ['c2d', 'd2d']):
+            extractor_func = DataReader.extact_binary()
+
+        elif self.model_developer.output_type == 'cls' and ( self.model_developer.model_type in ['c2d', 'd2d']) :
+            extractor_func = DataReader.extract_class(self.train_config.get_class_num(), False)
+        
+        elif self.model_developer.model_type in ['c2c']:
+            extractor_func = DataReader.extract_mask( self.train_config.get_class_num(), mask_size=self.model.output_shape[1:-1], consider_no_object=False, class_id=None )
+
+        
+        if filter_args is None:
+            annonations_name = DataReader.get_annonations_name(self.train_config.get_lbls_path())
+        else:
+            annonations_name = DataReader.filter_annonations(self.train_config.get_lbls_path(), filter_args )
+
+        self.annonations_name = annonations_name
+        trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=self.train_config.get_validation_split())
+
+        print('training on {} data and validation on {} data'.format(len(trains_list), len(val_list)))
+        
+
+        #statisticsDataset.binary_hist(train_config.get_lbls_path(), trains_list)
+        #statisticsDataset.binary_hist(train_config.get_lbls_path(), val_list)
+
+        self.train_gen = DataReader.generator( 
+                                    self.train_config.get_lbls_path(),
+                                    extractor_func,
+                                    annonations_name=trains_list,
+                                    batch_size=self.train_config.get_batch_size(),
+                                    aug = augmentation,
+                                    rescale=255, resize=(128,800),
+                                    featurs_extractor=featurs_extractor
+                                    )
+        
+        self.val_gen = DataReader.generator( 
+                                    self.train_config.get_lbls_path(),
+                                    extractor_func,
+                                    annonations_name=val_list,
+                                    batch_size=self.train_config.get_batch_size(),
+                                    aug=None,
+                                    rescale=255, resize=(128,800),
+                                    featurs_extractor=featurs_extractor
+                                    )
+
+        self.meta = {'trainsize': len(trains_list) , 'valsize': len(val_list)}
+
+
+
+    def startFitting(self, load_weights = False, model_name = None):
+        
+        if model_name is not None:
+            model_path = os.path.join( self.train_config.get_out_path(), model_name)
+        
+        else:
+            model_path = os.path.join( 
+                self.train_config.get_out_path(),
+                f'Model_{self.model_developer.model_type}_{self.model_developer.output_type}.h5'
+                )
+
+        if load_weights:
+                self.model.load_weights(model_path)
+
+
+        callback = callbacks.CustomCallback( model_path )
+        self.model.fit(  
+            self.train_gen,
+            validation_data = self.val_gen,
+            batch_size= self.train_config.get_batch_size(),
+            epochs = self.train_config.get_epochs(),
+            steps_per_epoch = self.meta['trainsize'] // self.train_config.get_batch_size(),
+            validation_steps = self.meta['valsize'] // self.train_config.get_batch_size(),
+            callbacks = [callback]
+            )
+
+
+    def __getBinMetrics(self):
+        return [
+            'acc',
+            metrics.BIN_Metrics().specificity,
+            metrics.BIN_Metrics().recall,
+            metrics.BIN_Metrics().precision,
+        ]
+
+    def __getClsMetrics(self):
+        return [
+            'This is where you put the metrics'
+        ]
+
+
+    def __getMaskMetrics(self):
+        return [
+            'acc',
+           metrics.Mask_Metrics().__iou__
+        ]
 
 
 
@@ -115,95 +241,37 @@ if __name__ == "__main__":
     path = 'train.json'
     train_config = trainConfig(path)
 
-    binary_metrics = metrics.BIN_Metrics()
-    callback = callbacks.CustomCallback(os.path.join( train_config.get_out_path(), 'test.h5' ))
-    model_developer = ModelDeveloper.ModelBuilder( train_config.get_model_config_path() )
-    model = model_developer.build()
-    model.compile( keras.optimizers.Adam( learning_rate= train_config.get_learning_rate ), 
-                   loss = __loss_dict__[ model_developer.output_type ],
-                   metrics=['acc', binary_metrics.precision, binary_metrics.recall, binary_metrics.specificity] ,
-                   )
-
-    model.summary()
-    print(model.input_shape)
-
-    
-    
     aug = augmention.augmention(shift_range=(-50, 50),
-                    rotation_range=(-5,5),
-                    zoom_range=(0.9,1.1),
+                    rotation_range=(-10,10),
+                    zoom_range=(0.95,1.05),
                     shear_range=(-0.05,0.05),
                     hflip=True, 
                     wflip = True, 
                     color_filter=True,
-                    chance=0.5  )
-
+                    chance= 0.5 )
+    
     featurs_extractor = [ 
-        Features.get_hog(bin_n=25, split_h=1, split_w=1),
-        Features.get_hoc(bin_n=25, split_h=1, split_w=1),# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
-        #Features.get_lbp(P=4,R=1,method ='uniform', split_h=2, split_w=4)
-        ]
-    #
-    #CHECK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if model_developer.output_type == ModelDeveloper.BINARY:
-        extractor_func = DataReader.extact_binary()
+        Features.get_hog(bin_n=25, split_h=2, split_w=4),
+        Features.get_hoc(bin_n=25, split_h=2, split_w=4)
+        ]# Features.get_hog(bin_n=25,split_h=1,split_w=4) ]
 
-    elif model_developer.output_type == ModelDeveloper.CLASSIFICATION:
-        extractor_func = DataReader.extract_class(train_config.get_class_num(), False)
+    filter_args = {
+                "included_object": ["YES"]
+                }
+
+    prep = Preperations(train_config)
+
+    prep.prepareModel( optimizer = keras.optimizers.RMSprop, print_summary = True )
+
+    prep.prepareData(augmentation = None , featurs_extractor = None, filter_args=filter_args)
 
 
-    #extractor_func = DataReader.extract_mask(train_config.get_class_num(), mask_size = (32,200), consider_no_object=False)
-    #CHECK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    statisticsDataset.defect_pixels_hist( train_config.get_lbls_path(), prep.annonations_name, userPercent=True)
 
-    annonations_name = DataReader.get_annonations_name(train_config.get_lbls_path())
 
-    trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=train_config.get_validation_split())
-
-    print('training on {} data and validation on {} data'.format(len(trains_list), len(val_list)))
+    viewer = DataViewr.Viewer(prep.train_gen)
     
-
-    #statisticsDataset.binary_hist(train_config.get_lbls_path(), trains_list)
-    #statisticsDataset.binary_hist(train_config.get_lbls_path(), val_list)
-
-    train_gen = DataReader.generator(train_config.get_lbls_path(),
-                                extractor_func,
-                                annonations_name=trains_list,
-                                batch_size=train_config.get_batch_size(),
-                                aug =  aug,
-                                rescale=255,
-                                resize=(128,800),
-                                featurs_extractor=featurs_extractor
-                                )
-    
-    val_gen = DataReader.generator( train_config.get_lbls_path(),
-                                extractor_func,
-                                annonations_name=val_list,
-                                batch_size=train_config.get_batch_size(),
-                                aug=None,
-                                rescale=255, resize=(128,800),
-                                featurs_extractor=featurs_extractor
-                                )
-    
-    
-    #viewer = DataViewr.Viewer(train_gen)
-    
-
-    #model.load_weights( os.path.join( train_config.get_out_path(), 'test.h5' ))
-    model.fit(  train_gen,
-                validation_data=val_gen,
-                batch_size=train_config.get_batch_size(),
-                epochs = train_config.get_epochs(),
-                steps_per_epoch = len(trains_list)//train_config.get_batch_size()+1,
-                validation_steps = len(val_list)//train_config.get_batch_size()+1,
-                validation_batch_size = train_config.get_batch_size(),
-                callbacks = [callback] 
-
-            )
-    
-
-    model.save( os.path.join( train_config.get_out_path(), 'test.h5' ))
-    
-
+    prep.startFitting(load_weights=False)
 
     '''
     train_gen = DataReader.generator( train_config.get_lbls_path(),

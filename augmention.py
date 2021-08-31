@@ -8,7 +8,7 @@ from numpy.random.mtrand import random_integers
 from scipy.interpolate import UnivariateSpline
 
 
-
+THRESH = 80
 class augmention():
 
     def __init__(self, shift_range=(-100, 100),
@@ -356,7 +356,7 @@ class augmention():
                 [img] = self.color_filter([img])
                 #print('color effect')
             #print('------------------augment-------------------')
-            _,mask = cv2.threshold(mask,180, 255, cv2.THRESH_BINARY)
+            _,mask = cv2.threshold(mask,THRESH, 255, cv2.THRESH_BINARY)
         return img, mask
 
 
@@ -399,7 +399,7 @@ class augmention():
                 reses = self.rotate(reses, angle)
                 #print('rotate', angle)
 
-            if np.random.rand() < func_chance and self.shift_range is not None:
+            if np.random.rand() < func_chance and self.shear_range is not None:
                 value = np.random.random() * (self.shear_range[1] - self.shear_range[0]) + self.shear_range[0]
                 reses = self.shear(reses, value)
                 #print('shear', value)

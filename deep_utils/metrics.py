@@ -160,6 +160,46 @@ class BIN_Metrics():
 
         return tf.math.divide_no_nan(true_neg_count , all_)       
 
+
+
+
+
+
+
+
+class Mask_Metrics():
+    
+    def __init__(self, threshold = 0.5):
+        self.__threshold = threshold
+
+    def __iou__(self , y_true, y_pred):
+
+        pred = tf.math.floor(
+            (tf.math.sign( y_pred - self.__threshold ) + 1) / 2
+        )
+
+        true = tf.cast(y_true , tf.bool)
+        pred = tf.cast(pred , tf.bool)
+
+        unity = tf.logical_and(true , pred)
+        union = tf.logical_or(true , pred)
+
+        unity = tf.cast(unity, dtype=tf.float32)
+        union = tf.cast(union, dtype=tf.float32)
+
+        unity_area = tf.reduce_sum(unity, axis=[-2, -3])
+        union_area = tf.reduce_sum(union, axis=[-2, -3])
+
+        iou = tf.math.divide_no_nan(unity_area , union_area)
+        return tf.reduce_mean(iou, axis=0)
+
+                
+
+
+
+
+
+
 '''
 data_ = np.random.rand( 100, 8 )
 print(data_)

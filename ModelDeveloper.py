@@ -44,7 +44,6 @@ class ModelBuilder():
     def __init__(self , path = None):
         if path is not None:
             self.__json = self.__read__(path)
-
     
     #______________________________________________________________________________________________________________________________________________
     #explain:
@@ -78,21 +77,21 @@ class ModelBuilder():
         }
 
         assert self.__json['model-type'] in generator_dict.keys() , 'Model Type Not Valid!'
-        model_type = self.__json['model-type']
-        generator = generator_dict[model_type]
+        self.model_type = self.__json['model-type']
+        generator = generator_dict[self.model_type]
 
 
         assert self.__json['output-type'] in output_type_dict.keys() , 'Model\'s output type is Not Valid!'
-        output_type_val = self.__json['output-type']
-        self.output_type = output_type_dict[output_type_val]
+        self.output_type = self.__json['output-type']
+        self.__output_type = output_type_dict[self.output_type]
         
-        input_shape = np.array(
+        self.input_shape = np.array(
             self.__json['input-dimension']
         )
 
-        output_neuron = int( self.__json['output-neuron_count'] )
+        self.output_neuron = int( self.__json['output-neuron_count'] )
 
-        return generator(input_shape , output_neuron , self.output_type)
+        return generator(self.input_shape , self.output_neuron , self.__output_type)
 
 
     
@@ -109,8 +108,10 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_dense2dense(self ,  input_shape , output_neuron, output_type ):
+
         model = keras.Sequential()
         model.add( keras.layers.Input(shape = input_shape) )
+
         model.add( keras.layers.Dense(256 , activation=None)) #or 64 and 64 as units
         model.add( keras.layers.BatchNormalization())
         model.add( keras.layers.ReLU())
@@ -164,29 +165,24 @@ class ModelBuilder():
         conv5 = keras.layers.Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
         conv5 = keras.layers.Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
         drop5 = keras.layers.Dropout(0.5)(conv5)
-
         up6 = keras.layers.Conv2D(512, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(drop5))
         merge6 = keras.layers.concatenate([drop4,up6], axis = 3)
         conv6 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
         conv6 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
-
         up7 = keras.layers.Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv6))
         merge7 = keras.layers.concatenate([conv3,up7], axis = 3)
         conv7 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
         conv7 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
-
         up8 = keras.layers.Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv7))
         merge8 = keras.layers.concatenate([conv2,up8], axis = 3)
         conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
         conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
-
         up9 = keras.layers.Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(keras.layers.UpSampling2D(size = (2,2))(conv8))
         merge9 = keras.layers.concatenate([conv1,up9], axis = 3)
         conv9 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
         conv9 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
         conv9 = keras.layers.Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
         conv10 = keras.layers.Conv2D(1, 1, activation = 'sigmoid')(conv9)
-
         model = keras.Model(inputs,  conv10)
         '''
 
@@ -194,19 +190,26 @@ class ModelBuilder():
         conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
         conv1 = keras.layers.Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
         pool1 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv1)
+
         conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
         conv2 = keras.layers.Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
         pool2 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
+
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3)
-
         pool3 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv3)
+
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
         drop4 = keras.layers.Dropout(0.5)(conv4)
         pool4 = keras.layers.MaxPooling2D(pool_size=(2, 2))(drop4)
 
         conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
+
+        out = keras.layers.Conv2D(output_neuron, 3, activation = output_type, padding = 'same', kernel_initializer = 'he_normal')(conv5)
+        model = keras.Model(inputs,  out)
+        return model
+        
         conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
         drop5 = keras.layers.Dropout(0.5)(conv5)
 
@@ -221,9 +224,7 @@ class ModelBuilder():
         conv8 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
         out = keras.layers.Conv2D(output_neuron, 3, activation = output_type, padding = 'same', kernel_initializer = 'he_normal')(conv8)
 
-
         model = keras.Model(inputs,  out)
-
         return model
 
 
@@ -240,7 +241,7 @@ class ModelBuilder():
     #   model
     #______________________________________________________________________________________________________________________________________________
     def simple_cnn2dense(self, input_shape , output_neuron , output_type ):
-        
+    
         model = keras.Sequential()
         model.add( keras.layers.Input(shape=input_shape))
 
@@ -253,15 +254,11 @@ class ModelBuilder():
         model.add( keras.layers.BatchNormalization())
         model.add( keras.layers.ReLU())
 
-        
         model.add( keras.layers.Conv2D(512, kernel_size=(3,3), strides=(1,1), padding='valid', activation=None))
         model.add( keras.layers.BatchNormalization())
         model.add( keras.layers.ReLU())
         model.add( keras.layers.MaxPooling2D( pool_size=(2,2)))
 
-
-
-        #model.add( keras.layers.Conv2D(64, kernel_size=(1,1), strides=(1,1), padding='valid', activation='relu'))
         model.add( keras.layers.GlobalAvgPool2D())
         model.add( keras.layers.Dense(128 , activation='relu'))
         model.add( keras.layers.Dense(64 , activation='relu'))
@@ -276,6 +273,6 @@ if __name__ == '__main__':
     print('start')
     # model_builder = ModelBuilder()
     # model = model_builder.simple_cnn2dense( (300,300,3), 30, BINARY )
-    model_builder = ModelBuilder(r'configs/config-model.json')
+    model_builder = ModelBuilder(r'configs\config-model.json')
     model = model_builder.build()
     model.summary()
