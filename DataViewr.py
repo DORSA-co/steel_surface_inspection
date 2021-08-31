@@ -9,7 +9,7 @@ import numpy as np
 
 
 
-MASK_THRESH = 130
+MASK_THRESH = 80
 #______________________________________________________________________________________________________________________________________________
 #explain:
 #   show Dataset. Just instance an object and it will show images and labels

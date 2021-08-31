@@ -197,13 +197,18 @@ class ModelBuilder():
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
         conv3 = keras.layers.Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv3)
         pool3 = keras.layers.MaxPooling2D(pool_size=(2, 2))(conv3)
-        
+
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
         conv4 = keras.layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
         drop4 = keras.layers.Dropout(0.5)(conv4)
         pool4 = keras.layers.MaxPooling2D(pool_size=(2, 2))(drop4)
 
         conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
+
+        out = keras.layers.Conv2D(output_neuron, 3, activation = output_type, padding = 'same', kernel_initializer = 'he_normal')(conv5)
+        model = keras.Model(inputs,  out)
+        return model
+        
         conv5 = keras.layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
         drop5 = keras.layers.Dropout(0.5)(conv5)
 

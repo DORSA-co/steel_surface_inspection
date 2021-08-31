@@ -13,6 +13,7 @@ import statisticsDataset
 import numpy as np
 from deep_utils import metrics
 from deep_utils import callbacks
+from deep_utils import losses
 np.seterr(divide='ignore', invalid='ignore')
 
 #______________________________________________________________________________________________________________________________________
@@ -107,15 +108,19 @@ class Preperations():
 
         self.model = self.model_developer.build()
 
-        if self.model_developer.output_type == 'cls':
+        if self.model_developer.output_type == 'cls' and ( self.model_developer.model_type in ['c2d', 'd2d']):
             metric = self.__getClsMetrics()
 
-        elif self.model_developer.output_type == 'bin':
+        elif self.model_developer.output_type == 'bin'and ( self.model_developer.model_type in ['c2d', 'd2d']):
             metric = self.__getBinMetrics()
+        
+        elif self.model_developer.model_type in ['c2d', 'c2c']:
+            metric = self.__getMaskMetrics()
 
         self.model.compile(
-            optimizer(learning_rate= train_config.get_learning_rate),
+            optimizer(learning_rate= self.train_config.get_learning_rate),
             loss = self.__loss_dict__[ self.model_developer.output_type ],
+            #loss = losses.mask_binary_weight([0.005, 0.005, 0.005, 0.005]),
             metrics = metric
         )
 
@@ -143,6 +148,7 @@ class Preperations():
         else:
             annonations_name = DataReader.filter_annonations(self.train_config.get_lbls_path(), filter_args )
 
+        self.annonations_name = annonations_name
         trains_list, val_list = DataReader.split_annonations_name(annonations_name, split=self.train_config.get_validation_split())
 
         print('training on {} data and validation on {} data'.format(len(trains_list), len(val_list)))
@@ -216,6 +222,12 @@ class Preperations():
         ]
 
 
+    def __getMaskMetrics(self):
+        return [
+            'acc',
+           metrics.Mask_Metrics().__iou__
+        ]
+
 
 
 
@@ -229,9 +241,9 @@ if __name__ == "__main__":
     path = 'train.json'
     train_config = trainConfig(path)
 
-    aug = augmention.augmention(shift_range=(-100, 100),
+    aug = augmention.augmention(shift_range=(-50, 50),
                     rotation_range=(-10,10),
-                    zoom_range=(0.9,1.1),
+                    zoom_range=(0.95,1.05),
                     shear_range=(-0.05,0.05),
                     hflip=True, 
                     wflip = True, 
@@ -252,6 +264,9 @@ if __name__ == "__main__":
     prep.prepareModel( optimizer = keras.optimizers.RMSprop, print_summary = True )
 
     prep.prepareData(augmentation = None , featurs_extractor = None, filter_args=filter_args)
+
+
+    statisticsDataset.defect_pixels_hist( train_config.get_lbls_path(), prep.annonations_name, userPercent=True)
 
     viewer = DataViewr.Viewer(prep.train_gen)
     
