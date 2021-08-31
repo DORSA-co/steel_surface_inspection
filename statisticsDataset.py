@@ -49,21 +49,24 @@ def binary_hist(annonation_path, annonations_name=None):
 #   annonations_name: list of annonations name that we want calculate their histogram. if be None, histogram calculated for all annonations in directory
 #   userPercent:????????????????/
 #______________________________________________________________________________________________________________________________________________
-def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = False ):
+def defect_pixels_hist(annonation_path , annonations_name=None, data_show_stat = 1 ):
 
     if annonations_name is None:
         annonations_name = os.listdir( annonation_path )
     annonations_name = list( filter( lambda x:x[-5:]=='.json' , annonations_name))
     
 
-    def add_to_array(inp_dic , cls , count):
+    def add_to_array(inp_dic, inp_dic_count , cls , count):
         if cls in inp_dic.keys():
             inp_dic[cls] += count
+            inp_dic_count[cls] += 1
         
         elif cls not in inp_dic.keys():
             inp_dic[cls] = count
+            inp_dic_count[cls] = 1
 
     buckets = {}
+    class_count = {}
 
     for anot_name in annonations_name:
         annotation = Annotation(os.path.join(annonation_path , anot_name))
@@ -71,19 +74,27 @@ def defect_pixels_hist(annonation_path , annonations_name=None, userPercent = Fa
             mask_list = annotation.get_masks()
             for mask in mask_list:
                 count = np.sum( mask.__coded_mask__[:, 1] )
-                add_to_array(buckets , mask.class_id , count) 
+                add_to_array(buckets, class_count , mask.class_id , count) 
     
     fig = plt.figure(edgecolor='k' , )
     ax = fig.add_axes([0.2, 0.15, 0.6, 0.7])
 
-    if userPercent:
+    if data_show_stat == 0:
         ax.set_ylabel('Pix Number Percent')
         total = sum(buckets.values())
         #print(total)
         for key , elm in buckets.items():
             buckets[key] /= (total * 0.01)
-    else:
+
+    elif data_show_stat == 1:
         ax.set_ylabel('Pix Number')
+    
+    elif data_show_stat == 2:
+        ax.set_ylabel('Mask/Tootal Percent')
+        total = sum(buckets.values())
+        #print(total)
+        for key , elm in buckets.items():
+            buckets[key] /= (256*1600*class_count[key])* 0.01
         
     ax.set_xlabel('Class')
     ax.set_title('Class-Pixel Bar Chart')
@@ -126,8 +137,8 @@ if __name__ == '__main__':
     csv_path = 'severstal-steel-defect-detection/train.csv'
     img_path = 'severstal-steel-defect-detection/train_images'
     annonation_path = 'severstal-steel-defect-detection/annotations'
-    class_hist(annonation_path=annonation_path, annonations_name= None)
+    # class_hist(annonation_path=annonation_path, annonations_name= None)
     # binary_hist(annonation_path=annonation_path, annonations_name= None)
-    defect_pixels_hist(annonation_path , userPercent=True)
+    defect_pixels_hist(annonation_path , data_show_stat=2)
 
 
