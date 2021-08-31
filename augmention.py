@@ -323,7 +323,6 @@ class augmention():
         
         if np.random.rand() < self.chance:
             masks = np.moveaxis( masks, [-1],[0])
-            print(masks.shape)
             masks = list(masks)
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
