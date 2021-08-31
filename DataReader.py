@@ -13,6 +13,7 @@ import json
 CLASSIFICATION_TYPE = 1
 BINARY_TYPE = 2
 MASK_TYPE = 3
+THRESH= 80
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -439,7 +440,7 @@ def extract_mask( class_num, mask_size, consider_no_object=False, class_id=None)
             else:
                 for mask_obj in mask_objs:
                     msk = cv2.resize(mask_obj.mask , mask_size[::-1] )  #in json file class started ferm numer 1
-                    _,msk = cv2.threshold(msk,180, 255, cv2.THRESH_BINARY)
+                    _,msk = cv2.threshold(msk,THRESH, 255, cv2.THRESH_BINARY)
                     lbl[:,:,mask_obj.class_id] = msk
                      
         
