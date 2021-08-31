@@ -1,11 +1,7 @@
 {
     "model-type": "c2c",
     "input-dimension" : [128,800,3],
-<<<<<<< HEAD
-    "output-neuron_count" : "1",
-=======
     "output-neuron_count" : "4",
->>>>>>> master
     "output-type" : "bin"
     
 }
