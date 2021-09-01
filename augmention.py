@@ -8,8 +8,8 @@ from numpy.random.mtrand import random_integers
 from scipy.interpolate import UnivariateSpline
 from tensorflow.python.keras.backend import print_tensor
 
-
-THRESH = 10
+np.random.seed(0)
+THRESH = 50
 class augmention():
 
     def __init__(self, shift_range=(-100, 100),
@@ -324,6 +324,23 @@ class augmention():
         if np.random.rand() < self.chance:
             masks = np.moveaxis( masks, [-1],[0])
             masks = list(masks)
+
+            #Store orginal size to restor again after augment
+            masks_size=[]
+            for mask in masks:
+                h,w = mask.shape[:2]
+                masks_size.append((w,h))
+            
+            #resize mask to image size for augment same way
+            img_h, img_w = img.shape[:2]
+            for i in range(len(masks)):
+                mask = masks[i]
+                mask = cv2.resize(mask, (img_w,img_h))
+                _, mask = cv2.threshold(mask, THRESH, 255, cv2.THRESH_BINARY)
+                masks[i] = np.copy(mask)
+                
+
+
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
                 ty = np.random.randint(self.shift_range[0], self.shift_range[1])
@@ -359,9 +376,13 @@ class augmention():
                 [img] = self.color_filter([img])
                 #print('color effect')
             #print('------------------augment-------------------')
+
+            #resize masks again to orginal size
             for i in range(len(masks)):
-                
-                _,masks[i] = cv2.threshold(masks[i],THRESH, 255, cv2.THRESH_BINARY)
+                mask = masks[i]
+                mask = cv2.resize(mask, masks_size[i])
+                _, mask = cv2.threshold(mask, THRESH, 255, cv2.THRESH_BINARY)
+                masks[i] = np.copy(mask)
 
             masks = np.array(masks)
             masks  = np.moveaxis(masks,[0],[-1])
