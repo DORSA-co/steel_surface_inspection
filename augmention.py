@@ -9,7 +9,7 @@ from scipy.interpolate import UnivariateSpline
 from tensorflow.python.keras.backend import print_tensor
 
 
-THRESH = 80
+THRESH = 10
 class augmention():
 
     def __init__(self, shift_range=(-100, 100),
@@ -342,7 +342,7 @@ class augmention():
                 img, *masks  = self.rotate([img] + masks , angle)
                 #print('rotate', angle)
 
-            if np.random.rand() < func_chance and self.shift_range is not None:
+            if np.random.rand() < func_chance and self.shear_range is not None:
                 value = np.random.random() * (self.shear_range[1] - self.shear_range[0]) + self.shear_range[0]
                 img, *masks  = self.shear([img] + masks , value)
                 #print('shear', value)
