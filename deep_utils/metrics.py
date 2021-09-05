@@ -167,15 +167,11 @@ class BIN_Metrics():
 
 
 
-class Mask_Metrics():
-    
-    def __init__(self, threshold = 0.5):
-        self.__threshold = threshold
-
-    def __iou__(self , y_true, y_pred):
+def iou_metric(class_id , threshold=0.5):
+    def __iou__(y_true, y_pred):
 
         pred = tf.math.floor(
-            (tf.math.sign( y_pred - self.__threshold ) + 1) / 2
+            (tf.math.sign( y_pred - threshold ) + 1) / 2
         )
 
         true = tf.cast(y_true , tf.bool)
@@ -191,7 +187,8 @@ class Mask_Metrics():
         union_area = tf.reduce_sum(union, axis=[-2, -3])
 
         iou = tf.math.divide_no_nan(unity_area , union_area)
-        return tf.reduce_mean(iou, axis=0)
+        return tf.reduce_mean(iou, axis=0)[class_id ]
+    return __iou__
 
                 
 

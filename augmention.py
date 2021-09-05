@@ -6,9 +6,10 @@ from numpy.lib.function_base import copy
 from numpy.lib.twodim_base import tri
 from numpy.random.mtrand import random_integers
 from scipy.interpolate import UnivariateSpline
+from tensorflow.python.keras.backend import print_tensor
 
-
-THRESH = 80
+np.random.seed(0)
+THRESH = 50
 class augmention():
 
     def __init__(self, shift_range=(-100, 100),
@@ -316,48 +317,76 @@ class augmention():
     #   img: result image
     #   mask: result mask
     #______________________________________________________________________________________________________________________________________________
-    def augment_single_byMask(self,img, mask):
+    def augment_single_byMask(self,img, masks):
         
         func_chance = 0.5
         
         if np.random.rand() < self.chance:
+            masks = np.moveaxis( masks, [-1],[0])
+            masks = list(masks)
+
+            #Store orginal size to restor again after augment
+            masks_size=[]
+            for mask in masks:
+                h,w = mask.shape[:2]
+                masks_size.append((w,h))
+            
+            #resize mask to image size for augment same way
+            img_h, img_w = img.shape[:2]
+            for i in range(len(masks)):
+                mask = masks[i]
+                mask = cv2.resize(mask, (img_w,img_h))
+                _, mask = cv2.threshold(mask, THRESH, 255, cv2.THRESH_BINARY)
+                masks[i] = np.copy(mask)
+                
+
+
             if np.random.rand() < func_chance and self.shift_range is not None:
                 tx = np.random.randint(self.shift_range[0], self.shift_range[1])
                 ty = np.random.randint(self.shift_range[0], self.shift_range[1])
-                [img, mask ]  = self.shift([img, mask ] , tx, ty)
+                img, *masks  = self.shift([img] + masks, tx, ty)
                 #print('shift', tx,ty)
                     
 
             if np.random.rand() < func_chance and self.zoom_range is not None:
                 zoom_x = np.random.random() * (self.zoom_range[1] - self.zoom_range[0]) + self.zoom_range[0]
                 zoom_y = np.random.random() * (self.zoom_range[1] - self.zoom_range[0]) + self.zoom_range[0]
-                [img, mask ]  = self.zoom([img, mask ] , zoom_x, zoom_y)
+                img, *masks  = self.zoom([img] + masks , zoom_x, zoom_y)
                 #print('zoom', zoom_x, zoom_y)
 
             if np.random.rand() < func_chance and self.rotation_range is not None:
                 angle = np.random.random() * (self.rotation_range[1] - self.rotation_range[0]) + self.rotation_range[0]
-                [img, mask ]  = self.rotate([img, mask ] , angle)
+                img, *masks  = self.rotate([img] + masks , angle)
                 #print('rotate', angle)
 
-            if np.random.rand() < func_chance and self.shift_range is not None:
+            if np.random.rand() < func_chance and self.shear_range is not None:
                 value = np.random.random() * (self.shear_range[1] - self.shear_range[0]) + self.shear_range[0]
-                [img, mask ]  = self.shear([img, mask ] , value)
+                img, *masks  = self.shear([img] + masks , value)
                 #print('shear', value)
 
             if np.random.rand() < func_chance and self.wflip:
-                [img, mask ]  = self.wflip([img, mask ] )
+                img, *masks  = self.wflip([img] + masks )
                 #print('wfilp')
 
             if np.random.rand() < func_chance and self.hflip:
-                [img, mask ]  = self.hflip([img, mask ] )
+                img, *masks  = self.hflip([img] + masks )
                 #print('hfilp')
 
             if np.random.rand() < func_chance and self.color_filter:
                 [img] = self.color_filter([img])
                 #print('color effect')
             #print('------------------augment-------------------')
-            _,mask = cv2.threshold(mask,THRESH, 255, cv2.THRESH_BINARY)
-        return img, mask
+
+            #resize masks again to orginal size
+            for i in range(len(masks)):
+                mask = masks[i]
+                mask = cv2.resize(mask, masks_size[i])
+                _, mask = cv2.threshold(mask, THRESH, 255, cv2.THRESH_BINARY)
+                masks[i] = np.copy(mask)
+
+            masks = np.array(masks)
+            masks  = np.moveaxis(masks,[0],[-1])
+        return img, masks
 
 
     #______________________________________________________________________________________________________________________________________________
