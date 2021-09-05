@@ -116,7 +116,7 @@ class BBOX():
         return self._truncated
 
     def get_difficult(self):
-        self._difficult
+        return self._difficult
 
 
 
