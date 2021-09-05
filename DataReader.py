@@ -7,7 +7,7 @@ from numpy.lib.shape_base import split
 import random
 from sys import getsizeof
 import json
-
+import math
 
 
 CLASSIFICATION_TYPE = 1
@@ -61,12 +61,12 @@ class Mask():
 
     
     def get_mask(self):
-        return self.__mask__
+        return self.__coded_mask__
     
 
 
     def get_class_id(self):
-        return self.__class_id__
+        return self.class_id
 
 
 
@@ -293,9 +293,24 @@ class Annotation():
 
     def have_object(self): 
         return self.annotation['included_object'] == 'YES'
+
+
+    def convert_mask_to_bbox(self):
+        assert self.is_lbl_mask() , 'Your annotation is BBOX and cannot be converted.'
+
+        bboxes = list()
+
+        for mask in self.get_masks():
+            bbox = BBOX(
+                bbox=list( mask_to_bbox(mask.get_mask()) ),
+                refrenced_size= self.get_img_size(),
+                class_id = mask.get_class_id()
+            )
+
+            bboxes.append(bbox)
     
     
-    
+        return bboxes
 
 #______________________________________________________________________________________________________________________________________________
 #explain:
@@ -675,3 +690,22 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
 
+def mask_to_bbox(mask, image_size = (256 , 1600)):
+    """[Returns the bouning box of a mask]
+
+    Args:
+        mask ([list]): [a single masks]
+        image_size (tuple, optional): [Size of the image]. Defaults to (256 , 1600).
+
+    Returns:
+        [tuple]: [x_min , x_max , y_min , y_max]
+    """
+
+    np_mask = np.array(mask)
+
+    bbox_x_min = np.floor(np_mask[0,0] / image_size[0])
+    bbox_x_max = np.floor( (np_mask[-1,0] + np_mask[-1,1]) / image_size[0])
+    bbox_y_min = np.min( np_mask[:,0] % image_size[0] )
+    bbox_y_max = np.max( (np_mask[:,0] + np_mask[: ,1]) % image_size[0] ) 
+
+    return bbox_x_min , bbox_y_min , bbox_x_max , bbox_y_max
