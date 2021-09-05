@@ -69,6 +69,60 @@ class Mask():
         return self.__class_id__
 
 
+
+
+
+
+
+
+
+
+
+
+class BBOX():
+
+    def __init__(
+        self,
+        bbox,
+        class_id,
+        refrenced_size,
+        pose = "Unspecified",
+        truncated = '0',
+        difficult = '0'
+        ):
+        
+        self._bbox = bbox
+        self._class_id = class_id
+        self._refrenced_size = refrenced_size
+
+        self._pose = pose
+        self._truncated = truncated
+        self._difficult = difficult
+
+    
+    def get_bbox(self):
+        return self._bbox
+
+    def get_class_id(self):
+        return self._class_id
+
+    def get_refrenced_size(self):
+        return self._refrenced_size
+
+    def get_pose(self):
+        return self._pose
+
+    def get_truncated(self):
+        return self._truncated
+
+    def get_difficult(self):
+        self._difficult
+
+
+
+
+
+
 #______________________________________________________________________________________________________________________________________________
 #explain:
 #   a class for read json anntotion label
@@ -201,9 +255,21 @@ class Annotation():
     def get_bboxs(self):
         assert self.have_object(), "There is no object"
         assert self.is_lbl_bbox(), "Label type is not bounding box"
-        assert False, "Not define yet still"
+        
+        bbox_list = list()
+        lables = self.annotation['labels']
 
+        for label in lables:
+            bbox = BBOX(
+                bbox = tuple(label['bbox']),
+                class_id= label['class'],
+                refrenced_size= self.get_img_size()
+            )
 
+            bbox_list.append(bbox)
+
+        return bbox_list
+        
     def is_class_valid(self , cls ):
         classes = self.get_classes()        
         if cls in classes:
@@ -577,8 +643,6 @@ if __name__ == '__main__':
         cv2.imshow('img', img)
         cv2.waitKey(0)
         print(y[i])
-
-
 
 
 
