@@ -61,9 +61,7 @@ class Mask():
 
     
     def get_mask(self):
-        return self.__coded_mask__
-    
-
+        return self.mask
 
     def get_class_id(self):
         return self.class_id
@@ -297,18 +295,22 @@ class Annotation():
 
     def convert_mask_to_bbox(self):
         assert self.is_lbl_mask() , 'Your annotation is BBOX and cannot be converted.'
-
+        assert self.have_object() , 'Your annotation dose not contatin an object'
         bboxes = list()
 
         for mask in self.get_masks():
-            bbox = BBOX(
-                bbox=list( mask_to_bbox(mask.get_mask()) ),
-                refrenced_size= self.get_img_size(),
-                class_id = mask.get_class_id()
-            )
+            
+            bbox_list = mask_to_bbox(mask.get_mask())
+            
+            for bbox in bbox_list:
+                
+                bbox = BBOX(
+                    bbox=list( bbox ),
+                    refrenced_size= self.get_img_size(),
+                    class_id = mask.get_class_id()
+                )
 
-            bboxes.append(bbox)
-    
+                bboxes.append(bbox)
     
         return bboxes
 
@@ -690,22 +692,24 @@ if __name__ == '__main__':
     # imgs,lbls = get_class_datasets(annotations[:1000],4, consider_no_object=True)
 
 
-def mask_to_bbox(mask, image_size = (256 , 1600)):
-    """[Returns the bouning box of a mask]
+def mask_to_bbox(enc_mask, image_size = (256 , 1600)):
+    """Returns all the bounding boxes of a mask.
 
     Args:
-        mask ([list]): [a single masks]
-        image_size (tuple, optional): [Size of the image]. Defaults to (256 , 1600).
+        enc_mask (np.array): encoded_masks
 
     Returns:
-        [tuple]: [x_min , x_max , y_min , y_max]
+        list: list of all bounding boxes in x_min , y_mix , x_max , y_max
     """
 
-    np_mask = np.array(mask)
+    contours , hir = cv2.findContours(enc_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    bbox_list = np.array(list(
+        map(cv2.boundingRect , contours)
+    ))
 
-    bbox_x_min = np.floor(np_mask[0,0] / image_size[0])
-    bbox_x_max = np.floor( (np_mask[-1,0] + np_mask[-1,1]) / image_size[0])
-    bbox_y_min = np.min( np_mask[:,0] % image_size[0] )
-    bbox_y_max = np.max( (np_mask[:,0] + np_mask[: ,1]) % image_size[0] ) 
+    bbox_list[:,2] += bbox_list[:,0]
+    bbox_list[:,3] += bbox_list[:,1]
 
-    return bbox_x_min , bbox_y_min , bbox_x_max , bbox_y_max
+    return bbox_list
+
+    

@@ -201,8 +201,8 @@ def __printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1
 
 
 def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : str, save_path_anotation:str):
-    """[Using the input parameters, this function will read the annotation of the images, convert them to XML format, saves them
-    in annotation save path and copy the coresponding images to image save path.]
+    """Using the input parameters, this function will read the annotation of the images, convert them to XML format, saves them
+    in annotation save path and copy the coresponding images to image save path.
 
     Args:
         image_path (str): [path of the images]
@@ -213,7 +213,7 @@ def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : 
     file_names = os.listdir(annotation_path)
 
     total_annotations = len(file_names)
-    print('Creating Object Detection Dataset!\nStarted Creation Please Wait...')
+    print('Creating Object Detection Dataset!\nPlease Wait...')
     for idx, file_name in enumerate(file_names):
         
         full_path = pth.join(annotation_path , file_name)
@@ -228,17 +228,17 @@ def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : 
 
 
         __printProgressBar(idx +1, total_annotations,prefix='Converting/Copying' , suffix='Completed')
-    print('Object Detection Dataset Created Successfully\n\n')
+    print('\n...\nObject Detection Dataset Created Successfully.\nPress any key to continue...')
+    input()
 
 def main():
     os.system('clear')
-    create_annotations_to_XML(
+    create_dataset_XML(
         image_path = r'severstal-steel-defect-detection\train_images',
         annotation_path = r'severstal-steel-defect-detection\annotations_json',
         save_path_img = r'severstal-steel-defect-detection\od-dataset\images',
         save_path_anotation = r'severstal-steel-defect-detection\od-dataset\annotations'
         )
-        
 
 
 if __name__ == '__main__':
