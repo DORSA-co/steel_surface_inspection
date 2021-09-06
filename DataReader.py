@@ -701,8 +701,10 @@ def mask_to_bbox(enc_mask, image_size = (256 , 1600)):
     Returns:
         list: list of all bounding boxes in x_min , y_mix , x_max , y_max
     """
+    kernel = np.ones((3,3),np.uint8)
+    dilated = cv2.dilate(enc_mask,kernel,iterations = 3)
 
-    contours , hir = cv2.findContours(enc_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours , hir = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     bbox_list = np.array(list(
         map(cv2.boundingRect , contours)
     ))

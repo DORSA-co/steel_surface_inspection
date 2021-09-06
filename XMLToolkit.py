@@ -200,7 +200,7 @@ def __printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1
 
 
 
-def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : str, save_path_anotation:str):
+def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : str, save_path_anotation:str, copyImages = False):
     """Using the input parameters, this function will read the annotation of the images, convert them to XML format, saves them
     in annotation save path and copy the coresponding images to image save path.
 
@@ -224,7 +224,8 @@ def create_dataset_XML(image_path:str , annotation_path : str , save_path_img : 
 
         if(anot.have_object()):
             JSON2XML(anot = anot).saveXML(pth.join(save_path_anotation , file_name_xml) , use_convrtMaskToBbox=True)
-            shutil.copyfile(pth.join(image_path,file_name_jpg), pth.join(save_path_img,file_name_jpg))
+            if copyImages:
+                shutil.copyfile(pth.join(image_path,file_name_jpg), pth.join(save_path_img,file_name_jpg))
 
 
         __printProgressBar(idx +1, total_annotations,prefix='Converting/Copying' , suffix='Completed')
@@ -237,7 +238,8 @@ def main():
         image_path = r'severstal-steel-defect-detection\train_images',
         annotation_path = r'severstal-steel-defect-detection\annotations_json',
         save_path_img = r'severstal-steel-defect-detection\od-dataset\images',
-        save_path_anotation = r'severstal-steel-defect-detection\od-dataset\annotations'
+        save_path_anotation = r'severstal-steel-defect-detection\od-dataset\annotations',
+        copyImages = False
         )
 
 
